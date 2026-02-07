@@ -93,7 +93,6 @@ static const Rule rules[] = {
     {"slack", NULL, NULL, 1 << 8, 0, 0, 0, 1},
     {"librewolf", NULL, NULL, 1 << 5, 0, 0, 0, -1},
     {"google-chrome", NULL, NULL, 1 << 5, 0, 0, 0, -1},
-
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
 
@@ -129,19 +128,13 @@ static const Layout layouts[] = {
 /* commands */
 static const char *launchercmd[] = {"rofi", "-show", "drun", NULL};
 static const char *termcmd[] = {"ghostty", NULL};
-/* Web app commands using xdg-open */
-static const char *gmailcmd[] = {"webapp-launch", "https://gmail.com", NULL};
-static const char *youtubecmd[] = {"webapp-launch", "https://youtube.com",
-                                   NULL};
 
 static Key keys[] = {
     /* modifier                     key                        function argument
      */
     {MODKEY, XK_r, spawn, {.v = launchercmd}},
+    {MODKEY | ControlMask, XK_r, spawn, SHCMD("protonrestart")},
     {MODKEY, XK_x, spawn, {.v = termcmd}},
-    {MODKEY, XK_a, spawn, {.v = chatgptcmd}},
-    {MODKEY | ShiftMask, XK_a, spawn, {.v = geminicmd}},
-    {MODKEY | ShiftMask, XK_x, spawn, {.v = xpostcmd}},
     {MODKEY, XK_b, spawn, SHCMD("xdg-open https://")},
     {MODKEY, XK_p, spawn, SHCMD("flameshot full -p /media/drive/Screenshots/")},
     {MODKEY | ShiftMask, XK_p, spawn,
