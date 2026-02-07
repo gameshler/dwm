@@ -84,12 +84,16 @@ static const Rule rules[] = {
     /* class                instance  title           tags mask  isfloating
        isterminal  noswallow  monitor  */
     {"St", NULL, NULL, 0, 0, 1, 0, -1},
-    {"kitty", NULL, NULL, 0, 0, 1, 0, -1},
-    {"alacritty", NULL, NULL, 0, 0, 1, 0, -1},
-    {"ghostty", NULL, NULL, 0, 0, 1, 0, -1},
-    {"warp-terminal", NULL, NULL, 0, 0, 1, 0, -1},
-    {"terminator", NULL, NULL, 0, 0, 1, 0, -1},
+    {"neovim", NULL, NULL, 1 << 0, 0, 0, 0, 0},
+    {"ghostty", NULL, NULL, 1 << 1, 0, 1, 0, -1},
+    {"zoom", NULL, NULL, 1 << 3, 0, 0, 0, 0},
+    {"google-chrome", NULL, "Meet", 1 << 3, 0, 0, 0, 0},
     {"thunar", NULL, NULL, 0, 0, 0, 0, -1},
+    {"discord", NULL, NULL, 1 << 7, 0, 0, 0, 1},
+    {"slack", NULL, NULL, 1 << 8, 0, 0, 0, 1},
+    {"librewolf", NULL, NULL, 1 << 5, 0, 0, 0, -1},
+    {"google-chrome", NULL, NULL, 1 << 5, 0, 0, 0, -1},
+
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
 
@@ -134,7 +138,6 @@ static Key keys[] = {
     /* modifier                     key                        function argument
      */
     {MODKEY, XK_r, spawn, {.v = launchercmd}},
-    {MODKEY | ControlMask, XK_r, spawn, SHCMD("protonrestart")},
     {MODKEY, XK_x, spawn, {.v = termcmd}},
     {MODKEY, XK_a, spawn, {.v = chatgptcmd}},
     {MODKEY | ShiftMask, XK_a, spawn, {.v = geminicmd}},

@@ -10,7 +10,7 @@ DWM_CONFIG_PATH="${HOME}/.local/share/my-dwm/config.h"
 #
 # Parse the static Key keys[] and static Button buttons[] sections
 dynamic_bindings() {
-  awk '
+    awk '
   BEGIN { 
     in_keys = 0
     in_buttons = 0
@@ -138,7 +138,6 @@ dynamic_bindings() {
         else if ($0 ~ /grokcmd/) desc = "Open Grok"
         else if ($0 ~ /gmailcmd/) desc = "Open Gmail"
         else if ($0 ~ /youtubecmd/) desc = "Open YouTube"
-        else if ($0 ~ /protonrestart/) desc = "Restart Proton"
         else if ($0 ~ /flameshot full/) desc = "Screenshot (full)"
         else if ($0 ~ /flameshot gui.*clipboard/) desc = "Screenshot to clipboard"
         else if ($0 ~ /flameshot gui/) desc = "Screenshot (selection)"
@@ -187,7 +186,7 @@ dynamic_bindings() {
 
 # Parse and format keybindings for rofi with markup
 parse_bindings() {
-  awk -F, -v q="'" '
+    awk -F, -v q="'" '
 {
     # First field is the key combination, second is the description
     key_combo = $1;
