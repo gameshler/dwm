@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Exec=xrandr --output DP-2 --mode 1920x1080 --rate 239.76 
-Hidden=false
-X-GNOME-Autostart-enabled=true
-Name=Set Refresh
-
-
