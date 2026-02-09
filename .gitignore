@@ -1,2 +1,15 @@
+# binaries
+/dwm
+
+# Patch Fail
+*.rej
+*.orig
+
+# Object Files
+*.o
+
+nohup.out
 .DS_STORE
 
+/release/**
+/release
