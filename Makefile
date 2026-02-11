@@ -20,26 +20,36 @@ dwm: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 clean:
-	rm -f dwm ${OBJ} dwm-${VERSION}.tar.gz
-
-dist: clean
-	mkdir -p dwm-${VERSION}
-	cp -R LICENSE Makefile README config.def.h config.mk\
-		dwm.1 drw.h util.h ${SRC} dwm.png transient.c dwm-${VERSION}
-	tar -cf dwm-${VERSION}.tar dwm-${VERSION}
-	gzip dwm-${VERSION}.tar
-	rm -rf dwm-${VERSION}
+	rm -f dwm ${OBJ} *.orig *.rej
 
 install: all
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	cp -f dwm ${DESTDIR}${PREFIX}/bin
-	chmod 755 ${DESTDIR}${PREFIX}/bin/dwm
+	install -Dm755 dwm ${DESTDIR}${PREFIX}/bin/dwm
 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	sed "s/VERSION/${VERSION}/g" < dwm.1 > ${DESTDIR}${MANPREFIX}/man1/dwm.1
 	chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
+	mkdir -p /usr/share/xsessions/
+	test -f /usr/share/xsessions/dwm.desktop || install -Dm644 dwm.desktop /usr/share/xsessions/
+	test -f /home/${SUDO_USER}/.xinitrc || install -Dm644 .xinitrc /home/${SUDO_USER}/.xinitrc
+	mkdir -p /home/${SUDO_USER}/.config/polybar
+	cp -rf polybar/* /home/${SUDO_USER}/.config/polybar/
+	chmod +x /home/${SUDO_USER}/.config/polybar/launch.sh
+	chmod +x /home/${SUDO_USER}/.config/polybar/scripts/dwm-tags.sh
+	mkdir -p ${DESTDIR}${PREFIX}/bin
+	install -Dm755 scripts/* ${DESTDIR}${PREFIX}/bin/
 
 uninstall:
-	rm -f ${DESTDIR}${PREFIX}/bin/dwm\
-		${DESTDIR}${MANPREFIX}/man1/dwm.1
+	rm -f ${DESTDIR}${PREFIX}/bin/dwm \
+		${DESTDIR}${MANPREFIX}/man1/dwm.1 \
+		${DESTDIR}/usr/share/xsessions/dwm.desktop
 
-.PHONY: all clean dist install uninstall
+release: dwm
+	mkdir -p release
+	cp -f dwm release/
+	cp -f dwm.desktop release/
+	cp -f .xinitrc release/
+	cp -rf polybar release/
+	cp -rf scripts release/
+	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop set-refresh.desktop .xinitrc polybar scripts
+
+.PHONY: all clean install uninstall release
