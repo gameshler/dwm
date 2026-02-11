@@ -134,8 +134,6 @@ dynamic_bindings() {
         # Try to extract command from the argument
         if ($0 ~ /launchercmd/) desc = "Launch application launcher"
         else if ($0 ~ /termcmd/) desc = "Open terminal"
-        else if ($0 ~ /chatgptcmd/) desc = "Open ChatGPT"
-        else if ($0 ~ /grokcmd/) desc = "Open Grok"
         else if ($0 ~ /gmailcmd/) desc = "Open Gmail"
         else if ($0 ~ /youtubecmd/) desc = "Open YouTube"
         else if ($0 ~ /protonrestart/) desc = "Restart Proton"
@@ -152,6 +150,7 @@ dynamic_bindings() {
         else if ($0 ~ /amixer.*5%+/) desc = "Increase volume"
         else if ($0 ~ /amixer.*mute/) desc = "Toggle mute"
         else if ($0 ~ /powermenu/) desc = "Power menu"
+        else if ($0 ~ /repo-finder/) desc = "Repository finder"
         else if ($0 ~ /systemctl reboot/) desc = "Reboot system"
         else if ($0 ~ /systemctl suspend/) desc = "Suspend system"
         else desc = "Run command"

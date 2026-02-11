@@ -192,6 +192,8 @@ static Key keys[] = {
             TAGKEYS(XK_9, 8){MODKEY | ShiftMask, XK_q, quit, {0}},
     {MODKEY | ControlMask, XK_q, spawn,
      SHCMD("$HOME/.config/rofi/powermenu.sh")},
+    {MODKEY | ControlMask | ShiftMask, XK_t, spawn,
+     SHCMD("$HOME/.config/rofi/repo-finder.sh")},
     {MODKEY | ControlMask | ShiftMask, XK_r, spawn, SHCMD("systemctl reboot")},
     {MODKEY | ControlMask | ShiftMask, XK_s, spawn, SHCMD("systemctl suspend")},
 };
