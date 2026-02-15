@@ -119,10 +119,14 @@ static const Layout layouts[] = {
 /* key definitions */
 #define MODKEY Mod4Mask
 #define TAGKEYS(KEY, TAG)                                                      \
-  {MODKEY, KEY, view, {.ui = 1 << TAG}},                                       \
-      {MODKEY | ControlMask, KEY, toggleview, {.ui = 1 << TAG}},               \
-      {MODKEY | ShiftMask, KEY, tag, {.ui = 1 << TAG}},                        \
-      {MODKEY | ControlMask | ShiftMask, KEY, toggletag, {.ui = 1 << TAG}},
+  &((Keychord){1, {{MODKEY, KEY}}, view, {.ui = 1 << TAG}}) &                  \
+      ((Keychord){                                                             \
+          1, {{MODKEY | ControlMask, KEY}}, toggleview, {.ui = 1 << TAG}}) &   \
+      ((Keychord){1, {{MODKEY | ShiftMask, KEY}}, tag, {.ui = 1 << TAG}}) &    \
+      ((Keychord){1,                                                           \
+                  {{MODKEY | ControlMask | ShiftMask, KEY}},                   \
+                  toggletag,                                                   \
+                  {.ui = 1 << TAG}})
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd)                                                             \
@@ -134,64 +138,140 @@ static const Layout layouts[] = {
 static const char *launchercmd[] = {"rofi", "-show", "drun", NULL};
 static const char *termcmd[] = {"ghostty", NULL};
 
-static Key keys[] = {
+static Keychord *keychords[] = {
     /* modifier                     key                        function argument
      */
-    {MODKEY, XK_r, spawn, {.v = launchercmd}},
-    {MODKEY | ControlMask, XK_r, spawn, SHCMD("protonrestart")},
-    {MODKEY, XK_x, spawn, {.v = termcmd}},
-    {MODKEY, XK_b, spawn, SHCMD("xdg-open https://")},
-    {MODKEY, XK_p, spawn, SHCMD("flameshot full -p /media/drive/Screenshots/")},
-    {MODKEY | ShiftMask, XK_p, spawn,
-     SHCMD("flameshot gui -p /media/drive/Screenshots/")},
-    {MODKEY | ControlMask, XK_p, spawn, SHCMD("flameshot gui --clipboard")},
-    {MODKEY, XK_e, spawn, SHCMD("xdg-open .")},
-    {MODKEY, XK_slash, spawn, SHCMD("dwm-keybinds")},
-    {MODKEY, XK_w, spawn, SHCMD("looking-glass-client -F")},
-    {MODKEY | ShiftMask, XK_w, spawn,
-     SHCMD("feh --randomize --bg-fill ~/Pictures/backgrounds/*")},
-    {0, XF86XK_MonBrightnessUp, spawn, SHCMD("xbacklight -inc 10")},
-    {0, XF86XK_MonBrightnessDown, spawn, SHCMD("xbacklight -dec 10")},
-    {0, XF86XK_AudioLowerVolume, spawn, SHCMD("amixer sset Master 5%- unmute")},
-    {0, XF86XK_AudioMute, spawn,
-     SHCMD("amixer sset Master $(amixer get Master | grep -q '\\[on\\]' && "
-           "echo 'mute' || echo 'unmute')")},
-    {0, XF86XK_AudioRaiseVolume, spawn, SHCMD("amixer sset Master 5%+ unmute")},
-    {MODKEY | ShiftMask, XK_b, togglebar, {0}},
-    {MODKEY, XK_j, focusstack, {.i = +1}},
-    {MODKEY, XK_k, focusstack, {.i = -1}},
-    {MODKEY | ShiftMask, XK_j, movestack, {.i = +1}},
-    {MODKEY | ShiftMask, XK_k, movestack, {.i = -1}},
-    {MODKEY, XK_i, incnmaster, {.i = +1}},
-    {MODKEY, XK_d, incnmaster, {.i = -1}},
-    {MODKEY, XK_h, setmfact, {.f = -0.05}},
-    {MODKEY, XK_l, setmfact, {.f = +0.05}},
-    {MODKEY | ShiftMask, XK_h, setcfact, {.f = +0.25}},
-    {MODKEY | ShiftMask, XK_l, setcfact, {.f = -0.25}},
-    {MODKEY | ShiftMask, XK_o, setcfact, {.f = 0.00}},
-    {MODKEY, XK_Return, zoom, {0}},
-    {MODKEY, XK_Tab, view, {0}},
-    {MODKEY, XK_q, killclient, {0}},
-    {MODKEY, XK_t, setlayout, {.v = &layouts[0]}},
-    {MODKEY, XK_f, setlayout, {.v = &layouts[1]}},
-    {MODKEY, XK_m, fullscreen, {0}},
-    {MODKEY, XK_space, togglefloating, {0}},
-    {MODKEY | ShiftMask, XK_m, togglefloating, {0}},
-    {MODKEY | ShiftMask, XK_y, togglefakefullscreen, {0}},
-    {MODKEY, XK_0, view, {.ui = ~0}},
-    {MODKEY, XK_comma, focusmon, {.i = -1}},
-    {MODKEY, XK_period, focusmon, {.i = +1}},
-    {MODKEY | ShiftMask, XK_comma, tagmon, {.i = -1}},
-    {MODKEY | ShiftMask, XK_period, tagmon, {.i = +1}},
+    &((Keychord){1, {{MODKEY, XK_r}}, spawn, {.v = launchercmd}}),
+    &((Keychord){
+        1, {{MODKEY | ControlMask, XK_r}}, spawn, SHCMD("protonrestart")}),
+    &((Keychord){1, {{MODKEY, XK_x}}, spawn, {.v = termcmd}}),
+    &((Keychord){1, {{MODKEY, XK_b}}, spawn, SHCMD("xdg-open https://")}),
+    &((Keychord){1,
+                 {{MODKEY, XK_p}},
+                 spawn,
+                 SHCMD("flameshot full -p /media/drive/Screenshots/")}),
+
+    &((Keychord){1,
+                 {{MODKEY | ShiftMask, XK_p}},
+                 spawn,
+                 SHCMD("flameshot gui -p /media/drive/Screenshots/")}),
+
+    &((Keychord){1,
+                 {{MODKEY | ControlMask, XK_p}},
+                 spawn,
+                 SHCMD("flameshot gui --clipboard")}),
+
+    &((Keychord){1, {{MODKEY, XK_e}}, spawn, SHCMD("xdg-open .")}),
+
+    &((Keychord){1, {{MODKEY, XK_slash}}, spawn, SHCMD("dwm-keybinds")}),
+
+    &((Keychord){1, {{MODKEY, XK_w}}, spawn, SHCMD("looking-glass-client -F")}),
+
+    &((Keychord){1,
+                 {{MODKEY | ShiftMask, XK_w}},
+                 spawn,
+                 SHCMD("feh --randomize --bg-fill ~/Pictures/backgrounds/*")}),
+
+    &((Keychord){
+        1, {{0, XF86XK_MonBrightnessUp}}, spawn, SHCMD("xbacklight -inc 10")}),
+
+    &((Keychord){1,
+                 {{0, XF86XK_MonBrightnessDown}},
+                 spawn,
+                 SHCMD("xbacklight -dec 10")}),
+
+    &((Keychord){1,
+                 {{0, XF86XK_AudioLowerVolume}},
+                 spawn,
+                 SHCMD("amixer sset Master 5%- unmute")}),
+
+    &((Keychord){1,
+                 {{0, XF86XK_AudioMute}},
+                 spawn,
+                 SHCMD("amixer sset Master $(amixer get Master | grep -q "
+                       "'\\[on\\]' && echo 'mute' || echo 'unmute')")}),
+
+    &((Keychord){1,
+                 {{0, XF86XK_AudioRaiseVolume}},
+                 spawn,
+                 SHCMD("amixer sset Master 5%+ unmute")}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_b}}, togglebar, {0}}),
+
+    &((Keychord){1, {{MODKEY, XK_j}}, focusstack, {.i = +1}}),
+
+    &((Keychord){1, {{MODKEY, XK_k}}, focusstack, {.i = -1}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_j}}, movestack, {.i = +1}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_k}}, movestack, {.i = -1}}),
+
+    &((Keychord){1, {{MODKEY, XK_i}}, incnmaster, {.i = +1}}),
+
+    &((Keychord){1, {{MODKEY, XK_d}}, incnmaster, {.i = -1}}),
+
+    &((Keychord){1, {{MODKEY, XK_h}}, setmfact, {.f = -0.05}}),
+
+    &((Keychord){1, {{MODKEY, XK_l}}, setmfact, {.f = +0.05}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_h}}, setcfact, {.f = +0.25}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_l}}, setcfact, {.f = -0.25}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_o}}, setcfact, {.f = 0.00}}),
+
+    &((Keychord){1, {{MODKEY, XK_Return}}, zoom, {0}}),
+
+    &((Keychord){1, {{MODKEY, XK_Tab}}, view, {0}}),
+
+    &((Keychord){1, {{MODKEY, XK_q}}, killclient, {0}}),
+
+    &((Keychord){1, {{MODKEY, XK_t}}, setlayout, {.v = &layouts[0]}}),
+
+    &((Keychord){1, {{MODKEY, XK_f}}, setlayout, {.v = &layouts[1]}}),
+
+    &((Keychord){1, {{MODKEY, XK_m}}, fullscreen, {0}}),
+
+    &((Keychord){1, {{MODKEY, XK_space}}, togglefloating, {0}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_m}}, togglefloating, {0}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_y}}, togglefakefullscreen, {0}}),
+
+    &((Keychord){1, {{MODKEY, XK_0}}, view, {.ui = ~0}}),
+
+    &((Keychord){1, {{MODKEY, XK_comma}}, focusmon, {.i = -1}}),
+
+    &((Keychord){1, {{MODKEY, XK_period}}, focusmon, {.i = +1}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_comma}}, tagmon, {.i = -1}}),
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_period}}, tagmon, {.i = +1}}),
+
+    &((Keychord){1,
+                 {{MODKEY | ControlMask, XK_q}},
+                 spawn,
+                 SHCMD("$HOME/.config/rofi/powermenu.sh")}),
+
+    &((Keychord){1,
+                 {{MODKEY | ControlMask | ShiftMask, XK_t}},
+                 spawn,
+                 SHCMD("$HOME/.config/rofi/repo-finder.sh")}),
+
+    &((Keychord){1,
+                 {{MODKEY | ControlMask | ShiftMask, XK_r}},
+                 spawn,
+                 SHCMD("systemctl reboot")}),
+
+    &((Keychord){1,
+                 {{MODKEY | ControlMask | ShiftMask, XK_s}},
+                 spawn,
+                 SHCMD("systemctl suspend")}),
+
     TAGKEYS(XK_1, 0) TAGKEYS(XK_2, 1) TAGKEYS(XK_3, 2) TAGKEYS(XK_4, 3)
         TAGKEYS(XK_5, 4) TAGKEYS(XK_6, 5) TAGKEYS(XK_7, 6) TAGKEYS(XK_8, 7)
             TAGKEYS(XK_9, 8){MODKEY | ShiftMask, XK_q, quit, {0}},
-    {MODKEY | ControlMask, XK_q, spawn,
-     SHCMD("$HOME/.config/rofi/powermenu.sh")},
-    {MODKEY | ControlMask | ShiftMask, XK_t, spawn,
-     SHCMD("$HOME/.config/rofi/repo-finder.sh")},
-    {MODKEY | ControlMask | ShiftMask, XK_r, spawn, SHCMD("systemctl reboot")},
-    {MODKEY | ControlMask | ShiftMask, XK_s, spawn, SHCMD("systemctl suspend")},
+
 };
 
 /* button definitions */
