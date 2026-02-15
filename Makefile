@@ -47,6 +47,7 @@ release: dwm
 	mkdir -p release
 	cp -f dwm release/
 	cp -f dwm.desktop release/
+	cp -f set-refresh.desktop release/
 	cp -f .xinitrc release/
 	cp -rf polybar release/
 	cp -rf scripts release/
