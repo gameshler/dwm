@@ -133,10 +133,6 @@ static const Layout layouts[] = {
 /* commands */
 static const char *launchercmd[] = {"rofi", "-show", "drun", NULL};
 static const char *termcmd[] = {"ghostty", NULL};
-/* Web app commands using xdg-open */
-static const char *gmailcmd[] = {"webapp-launch", "https://gmail.com", NULL};
-static const char *youtubecmd[] = {"webapp-launch", "https://youtube.com",
-                                   NULL};
 
 static Key keys[] = {
     /* modifier                     key                        function argument
