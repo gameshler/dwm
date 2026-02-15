@@ -1616,9 +1616,7 @@ void keypress(XEvent *e) {
   /* unsigned int i; */
   XEvent event = *e;
   unsigned int ran = 0;
-
-  int keysyms_return;
-  KeySym *keysym;
+  KeySym keysym;
   XKeyEvent *ev;
 
   Keychord *arr1[sizeof(keychords) / sizeof(Keychord *)];
