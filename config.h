@@ -145,7 +145,6 @@ static Keychord *keychords[] = {
     &((Keychord){1, {{MODKEY | ShiftMask, XK_p}}, spawn, SHCMD("flameshot gui -p /media/drive/Screenshots/")}),
     &((Keychord){1, {{MODKEY | ControlMask, XK_p}}, spawn, SHCMD("flameshot gui --clipboard")}),
     &((Keychord){1, {{MODKEY, XK_e}}, spawn, SHCMD("xdg-open .")}),
-    &((Keychord){1, {{MODKEY, XK_slash}}, spawn, SHCMD("dwm-keybinds")}),
     &((Keychord){1, {{MODKEY, XK_w}}, spawn, SHCMD("looking-glass-client -F")}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_w}}, spawn, SHCMD("feh --randomize --bg-fill ~/Pictures/backgrounds/*")}),
     &((Keychord){1, {{0, XF86XK_MonBrightnessUp}}, spawn, SHCMD("xbacklight -inc 10")}),
