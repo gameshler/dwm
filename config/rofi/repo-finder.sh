@@ -3,11 +3,13 @@ set -eu
 
 terminal="ghostty"
 
-configs="$(ls -1d "$HOME"/repos/*/ 2>/dev/null | xargs -n1 basename)"
+mkdir -p "$HOME/projects"
+
+configs="$(ls -1d "$HOME"/projects/*/ 2>/dev/null | xargs -n1 basename)"
 [ -n "$configs" ] || exit 0
 chosen="$(printf '%s\n' $configs | rofi -dmenu -p 'Projects:')"
 [ -n "$chosen" ] || exit 0
-dir="$HOME/repos/$chosen"
+dir="$HOME/projects/$chosen"
 
 pkill -x $terminal 2>/dev/null || true
 sleep 0.1
