@@ -9,11 +9,7 @@
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/gameshler/arch-gameshler/main/start.sh)
 ```
-### Optional
-
-> Input bookmarks in personal / work files
-
-**Bookmarks menu**
+### Bookmarks Menu (Optional)
 
 > Select bookmarks for personal and work files
 
