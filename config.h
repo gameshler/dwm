@@ -180,6 +180,7 @@ static Keychord *keychords[] = {
     &((Keychord){1, {{MODKEY | ShiftMask, XK_period}}, tagmon, {.i = +1}}),
     &((Keychord){1, {{MODKEY | ControlMask, XK_q}}, spawn, SHCMD("$HOME/.config/rofi/powermenu.sh")}),
     &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_t}}, spawn, SHCMD("$HOME/.config/rofi/repo-finder.sh")}),
+    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_b}}, spawn, SHCMD("$HOME/.config/rofi/bookmarksmenu.sh")}),
     &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_r}}, spawn, SHCMD("systemctl reboot")}),
     &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_s}}, spawn, SHCMD("systemctl suspend")}),
     TAGKEYS(                        XK_1,                      0)
