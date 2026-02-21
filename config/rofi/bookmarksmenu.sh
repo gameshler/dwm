@@ -9,15 +9,24 @@ FIREFOX="$(command -v firefox || true)"
 BRAVE="$(command -v brave || command -v brave-browser || true)"
 FALLBACK="$(command -v xdg-open || echo firefox)"
 
-mkdir -p "$(dirname "$PERS_FILE")"
-[ -f "$PERS_FILE" ] || cat >"$PERS_FILE" <<'EOF'
+# Create directories safely
+mkdir -p "$(dirname "$PERS_FILE")" "$(dirname "$WORK_FILE")"
+
+# Create personal file if it doesn't exist
+if [ ! -f "$PERS_FILE" ]; then
+  cat >"$PERS_FILE" <<'EOF'
 # personal
-https://youtube.com
+[youtube] https://youtube.com
 EOF
-[ -f "$WORK_FILE" ] || cat >"$WORK_FILE" <<'EOF'
+fi
+
+# Create work file if it doesn't exist
+if [ ! -f "$WORK_FILE" ]; then
+  cat >"$WORK_FILE" <<'EOF'
 # work
 [docs] Arch Wiki :: https://wiki.archlinux.org/title/ArchWiki:About
 EOF
+fi
 
 emit() {
   tag="$1"; file="$2"
@@ -29,6 +38,10 @@ emit() {
         lhs="$(printf '%s' "$lhs" | sed 's/[[:space:]]*$//')"
         rhs="$(printf '%s' "$rhs" | sed 's/^[[:space:]]*//')"
         printf '[%s] %s :: %s\n' "$tag" "$lhs" "$rhs"
+        ;;
+      *"] "*)
+        # Handle [tag] url format
+        printf '[%s] %s :: %s\n' "$tag" "$line" "${line#*] }"
         ;;
       *)
         printf '[%s] %s :: %s\n' "$tag" "$line" "$line"
@@ -44,7 +57,7 @@ choice="$({
 
 [ -n "$choice" ] || exit 0
 
-tag="${choice%%]*}"; tag="${tag#\[}"
+tag="${choice%%]*}"; tag="${tag#\\[}"
 raw="${choice##* :: }"
 
 raw="$(printf '%s' "$raw" \
@@ -59,7 +72,8 @@ esac
 open_with() {
   cmd="$1"
   if [ -n "$cmd" ]; then
-    nohup "$cmd" --new-tab "$url" >/dev/null 2>&1 & exit 0
+    nohup "$cmd" --new-tab "$url" >/dev/null 2>&1 &
+    exit 0
   fi
 }
 
@@ -68,4 +82,4 @@ case "$tag" in
   work)     open_with "$BRAVE" ;;
 esac
 
-nohup $FALLBACK "$url" >/dev/null 2>&1 &
+nohup "$FALLBACK" "$url" >/dev/null 2>&1 &
