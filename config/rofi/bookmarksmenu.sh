@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-PERS_FILE="${PERS_FILE:-$HOME/.config/bookmarks/personal.txt}"
-WORK_FILE="${WORK_FILE:-$HOME/.config/bookmarks/work.txt}"
+PERS_FILE="$HOME/.config/bookmarks/personal.txt"
+WORK_FILE="$HOME/.config/bookmarks/work.txt"
 
 ROFI="rofi -dmenu -p 'Bookmarks:'"
 
