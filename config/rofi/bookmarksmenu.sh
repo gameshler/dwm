@@ -1,8 +1,6 @@
 #!/bin/sh
 set -eu
 
-# Files (override via env if desired)
-: "${HOME:?HOME not set}"
 PERS_FILE="${PERS_FILE:-$HOME/.config/bookmarks/personal.txt}"
 WORK_FILE="${WORK_FILE:-$HOME/.config/bookmarks/work.txt}"
 
@@ -22,7 +20,6 @@ if [ ! -f "$PERS_FILE" ]; then
     cat >"$PERS_FILE" <<'EOF'
 # personal bookmarks
 youtube :: https://youtube.com
-reddit :: https://reddit.com
 EOF
 fi
 
