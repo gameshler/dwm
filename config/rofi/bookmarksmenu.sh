@@ -4,6 +4,9 @@ set -eu
 PERS_FILE="$HOME/.config/bookmarks/personal.txt"
 WORK_FILE="$HOME/.config/bookmarks/work.txt"
 
+mkdir -p "$(dirname "$PERS_FILE")"
+mkdir -p "$(dirname "$WORK_FILE")"
+
 ROFI="rofi -dmenu -p 'Bookmarks:'"
 
 FIREFOX="$(command -v firefox || true)"
@@ -11,16 +14,14 @@ BRAVE="$(command -v brave || command -v brave-browser || true)"
 FALLBACK="$(command -v xdg-open || echo librewolf)"
 
 if [ ! -f "$PERS_FILE" ]; then 
-mkdir -p "$(dirname "$PERS_FILE")"
-cat >"$PERS_FILE" <<'EOF'
+  cat >"$PERS_FILE" <<'EOF'
 # personal
 https://youtube.com
 EOF
 fi 
 
 if [ ! -f "$WORK_FILE" ]; then
-mkdir -p "$(dirname "$WORK_FILE")"
-cat >"$WORK_FILE" <<'EOF'
+  cat >"$WORK_FILE" <<'EOF'
 # work
 [docs] Arch Wiki :: https://wiki.archlinux.org/title/Arch_Linux
 EOF
@@ -66,7 +67,8 @@ esac
 open_with() {
   cmd="$1"
   if [ -n "$cmd" ]; then
-    nohup "$cmd" --new-tab "$url" >/dev/null 2>&1 & exit 0
+    nohup "$cmd" --new-tab "$url" >/dev/null 2>&1 &
+    exit 0
   fi
 }
 
