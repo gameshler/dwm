@@ -16,7 +16,6 @@ BRAVE="$(command -v brave || command -v brave-browser || true)"
 FALLBACK="$(command -v xdg-open || echo librewolf)"
 
 # Ensure files exist
-mkdir -p "$(dirname "$PERS_FILE")"
 if ! [ -f "$PERS_FILE" ]; then 
 mkdir -p $PERS_FILE
 cat >"$PERS_FILE" <<'EOF'
