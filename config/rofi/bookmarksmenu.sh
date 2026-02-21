@@ -64,7 +64,8 @@ raw="$(printf '%s' "$raw" |
         -e 's/[[:space:]]\/\/.*$//' \
         -e 's/^[[:space:]]*//' \
         -e 's/[[:space:]]*$//' |
-    sed 's/\[.*\]//g' | sed 's/([^)]*)//g')"
+    sed 's/\[.*\] *( *\(https\?:\/\/[^)]*\) *) */\1/g' |
+    sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
 
 case "$raw" in
     http://*|https://*|file://*|about:*|chrome:*) url="$raw" ;;
