@@ -15,22 +15,23 @@ FIREFOX="$(command -v firefox || true)"
 BRAVE="$(command -v brave || command -v brave-browser || true)"
 FALLBACK="$(command -v xdg-open || echo librewolf)"
 
-# Ensure files exist
-if ! [ -f "$PERS_FILE" ]; then 
-mkdir -p $PERS_FILE
-cat >"$PERS_FILE" <<'EOF'
+# Ensure directory and files exist
+BOOKMARK_DIR="$(dirname "$PERS_FILE")"
+mkdir -p "$BOOKMARK_DIR"
+
+if [ ! -f "$PERS_FILE" ]; then
+    cat >"$PERS_FILE" <<'EOF'
 # personal
-https://youtube.com
+[https://youtube.com](https://youtube.com)
 EOF
 fi
 
-if ! [ -f "$WORK_FILE" ]; then 
-mkdir -p $WORK_FILE
-cat >"$WORK_FILE" <<'EOF'
+if [ ! -f "$WORK_FILE" ]; then
+    cat >"$WORK_FILE" <<'EOF'
 # work
-[docs] ArchWiki :: https://wiki.archlinux.org/title/Arch_Linux
+[docs] ArchWiki :: [https://wiki.archlinux.org/title/Arch_Linux](https://wiki.archlinux.org/title/Arch_Linux)
 EOF
-fi 
+fi
 
 emit() {
     tag="$1"
@@ -68,14 +69,22 @@ tag="${tag#\[}"
 raw="${choice##* :: }"
 
 # Strip inline comments and trim
-raw="$(printf '%s' "$raw" |
-    sed -e 's/[[:space:]]\+#.*$//' -e 's/[[:space:]]\/\/.*$//' \
-        -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+raw="$(
+    printf '%s' "$raw" |
+        sed -e 's/[[:space:]]\+#.*$//' \
+            -e 's/[[:space:]]\/\/.*$//' \
+            -e 's/^[[:space:]]*//' \
+            -e 's/[[:space:]]*$//'
+)"
 
 # Ensure scheme
 case "$raw" in
-http://* | https://* | file://* | about:* | chrome:*) url="$raw" ;;
-*) url="https://$raw" ;;
+    http://* | https://* | file://* | about:* | chrome:*)
+        url="$raw"
+        ;;
+    *)
+        url="https://$raw"
+        ;;
 esac
 
 # Pick browser by tag
@@ -88,8 +97,8 @@ open_with() {
 }
 
 case "$tag" in
-personal) open_with "$FIREFOX" ;;
-work) open_with "$BRAVE" ;;
+    personal) open_with "$FIREFOX" ;;
+    work)     open_with "$BRAVE" ;;
 esac
 
 # Fallback if specific browser not found
