@@ -1,15 +1,19 @@
 #!/bin/sh
 set -eu
 
-PERS_FILE="${PERS_FILE:-$HOME/.config/bookmarks/personal.txt}"
-WORK_FILE="${WORK_FILE:-$HOME/.config/bookmarks/work.txt}"
+# Files
+PERS_FILE="$HOME/.config/bookmarks/personal.txt"
+WORK_FILE="$HOME/.config/bookmarks/work.txt"
 
+# Rofi command
 ROFI="rofi -dmenu -p 'Bookmarks:'"
 
+# Browsers
 FIREFOX="$(command -v firefox || true)"
 BRAVE="$(command -v brave || command -v brave-browser || true)"
 FALLBACK="$(command -v xdg-open || echo librewolf)"
 
+# Ensure directories and files exist
 mkdir -p "$(dirname "$PERS_FILE")"
 [ -f "$PERS_FILE" ] || cat >"$PERS_FILE" <<'EOF'
 # personal
@@ -20,29 +24,29 @@ EOF
 [docs] Arch Wiki :: https://wiki.archlinux.org/title/Arch_Linux
 EOF
 
+# Emit function to print bookmarks
 emit() {
   tag="$1"; file="$2"
   [ -f "$file" ] || return 0
-  # Output: "[tag] <display> :: <url or raw>"
-  # We keep the whole line after '::' as the raw RHS, or the entire line if no '::'
   grep -vE '^\s*(#|$)' "$file" | while IFS= read -r line; do
     case "$line" in
       *"::"*)
         lhs="${line%%::*}"; rhs="${line#*::}"
-        lhs="$(printf '%s' "$lhs" | sed 's/[[:space:]]*$//')"
-        rhs="$(printf '%s' "$rhs" | sed 's/^[[:space:]]*//')"
+        lhs="$(printf '%s' "$lhs" | sed 's/[[:space:]]*$//')"  # trim spaces from lhs
+        rhs="$(printf '%s' "$rhs" | sed 's/^[[:space:]]*//')"  # trim spaces from rhs
         printf '[%s] %s :: %s\n' "$tag" "$lhs" "$rhs"
         ;;
       *)
-        # If no "::", treat it as a URL and use the domain/path as the "lhs" (title)
+        # Handle single URL, extract domain as title
         url="$line"
-        title="$(echo "$url" | sed -E 's#^https?://([^/]+).*#\1#')"
+        title="$(echo "$url" | sed -E 's#^https?://([^/]+).*#\1#')"  # Extract domain (like youtube.com)
         printf '[%s] %s :: %s\n' "$tag" "$title" "$url"
         ;;
     esac
   done
 }
 
+# Build combined list of bookmarks
 choice="$({
   emit personal "$PERS_FILE"
   emit work     "$WORK_FILE"
@@ -50,22 +54,22 @@ choice="$({
 
 [ -n "$choice" ] || exit 0
 
-# Parse tag and raw URL
+# Parse the selected bookmark (tag and URL)
 tag="${choice%%]*}"; tag="${tag#\[}"
 raw="${choice##* :: }"
 
-# Strip inline comments and trim
+# Clean the raw URL (strip comments and whitespace)
 raw="$(printf '%s' "$raw" \
   | sed -e 's/[[:space:]]\+#.*$//' -e 's/[[:space:]]\/\/.*$//' \
         -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
-# Ensure scheme
+# Ensure the URL has a scheme (http:// or https://)
 case "$raw" in
   http://*|https://*|file://*|about:*|chrome:*) url="$raw" ;;
-  *) url="https://$raw" ;;
+  *) url="https://$raw" ;;  # Default to https:// if no scheme
 esac
 
-# Pick browser by tag
+# Open the URL in the correct browser based on the tag
 open_with() {
   cmd="$1"
   if [ -n "$cmd" ]; then
@@ -73,10 +77,11 @@ open_with() {
   fi
 }
 
+# Use appropriate browser
 case "$tag" in
   personal) open_with "$FIREFOX" ;;
   work)     open_with "$BRAVE" ;;
 esac
 
-# Fallback if specific browser not found
+# Fallback browser if no specific browser is found
 nohup $FALLBACK "$url" >/dev/null 2>&1 &
