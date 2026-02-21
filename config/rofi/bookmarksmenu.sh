@@ -17,18 +17,20 @@ FALLBACK="$(command -v xdg-open 2>/dev/null || echo librewolf)"
 # Ensure directory exists
 mkdir -p "$(dirname "$PERS_FILE")"
 
-# Ensure files exist with defaults
+# Ensure files exist with PROPER format
 if [ ! -f "$PERS_FILE" ]; then
     cat >"$PERS_FILE" <<'EOF'
-# personal
-[https://youtube.com](https://youtube.com)
+# personal bookmarks
+youtube :: https://youtube.com
+reddit :: https://reddit.com
 EOF
 fi
 
 if [ ! -f "$WORK_FILE" ]; then
     cat >"$WORK_FILE" <<'EOF'
-# work
-[docs] ArchWiki :: [https://wiki.archlinux.org/title/Arch_Linux](https://wiki.archlinux.org/title/Arch_Linux)
+# work bookmarks
+ArchWiki :: https://wiki.archlinux.org/title/Arch_Linux
+GitHub :: https://github.com
 EOF
 fi
 
@@ -36,7 +38,6 @@ emit() {
     tag="$1"
     file="$2"
     [ -f "$file" ] || return 0
-    # Output: "[tag] <display> :: <url or raw>"
     grep -vE '^\s*(#|$)' "$file" | while IFS= read -r line; do
         case "$line" in
         *"::"*)
@@ -61,7 +62,7 @@ choice="$({
 
 [ -n "$choice" ] || exit 0
 
-# Parse tag and raw URL
+# Parse tag and raw URL - FIXED
 tag="${choice%%]*}"
 tag="${tag#\[}"
 raw="${choice##* :: }"
@@ -71,7 +72,8 @@ raw="$(printf '%s' "$raw" |
     sed -e 's/[[:space:]]\+#.*$//' \
         -e 's/[[:space:]]\/\/.*$//' \
         -e 's/^[[:space:]]*//' \
-        -e 's/[[:space:]]*$//')"
+        -e 's/[[:space:]]*$//' |
+    sed 's/\[.*\]//g' | sed 's/([^)]*)//g')"
 
 # Ensure scheme
 case "$raw" in
@@ -82,7 +84,7 @@ esac
 open_with() {
     cmd="$1"
     if [ -n "$cmd" ]; then
-        nohup "$cmd" --new-tab "$url" >/dev/null 2>&1 &
+        nohup "$cmd" "$url" >/dev/null 2>&1 &
         exit 0
     fi
 }
