@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 
+: "${HOME:?HOME not set}"
 PERS_FILE="${PERS_FILE:-$HOME/.config/bookmarks/personal.txt}"
 WORK_FILE="${WORK_FILE:-$HOME/.config/bookmarks/work.txt}"
 
