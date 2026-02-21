@@ -17,11 +17,11 @@ FALLBACK="$(command -v xdg-open || echo librewolf)"
 
 # Ensure files exist
 mkdir -p "$(dirname "$PERS_FILE")"
-[ -f "$PERS_FILE" ] || cat >"$PERS_FILE" <<'EOF'
+if [ -f "$PERS_FILE" ] || cat >"$PERS_FILE" <<'EOF'
 # personal
 https://youtube.com
 EOF
-[ -f "$WORK_FILE" ] || cat >"$WORK_FILE" <<'EOF'
+if [ -f "$WORK_FILE" ] || cat >"$WORK_FILE" <<'EOF'
 # work
 [docs] ArchWiki :: https://wiki.archlinux.org/title/Arch_Linux
 EOF
