@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 
-# Files
-# Put your files in .config/bookmarks/.
+# Files (override via env if desired)
+: "${HOME:?HOME not set}"
 PERS_FILE="${PERS_FILE:-$HOME/.config/bookmarks/personal.txt}"
 WORK_FILE="${WORK_FILE:-$HOME/.config/bookmarks/work.txt}"
 
@@ -10,15 +10,14 @@ WORK_FILE="${WORK_FILE:-$HOME/.config/bookmarks/work.txt}"
 ROFI="rofi -dmenu -p 'Bookmarks:'"
 
 # Browsers
-# Choose your browsers accordingly
-FIREFOX="$(command -v firefox || true)"
-BRAVE="$(command -v brave || command -v brave-browser || true)"
-FALLBACK="$(command -v xdg-open || echo librewolf)"
+FIREFOX="$(command -v firefox 2>/dev/null || true)"
+BRAVE="$(command -v brave 2>/dev/null || command -v brave-browser 2>/dev/null || true)"
+FALLBACK="$(command -v xdg-open 2>/dev/null || echo librewolf)"
 
-# Ensure directory and files exist
-BOOKMARK_DIR="$(dirname "$PERS_FILE")"
-mkdir -p "$BOOKMARK_DIR"
+# Ensure directory exists
+mkdir -p "$(dirname "$PERS_FILE")"
 
+# Ensure files exist with defaults
 if [ ! -f "$PERS_FILE" ]; then
     cat >"$PERS_FILE" <<'EOF'
 # personal
@@ -38,7 +37,6 @@ emit() {
     file="$2"
     [ -f "$file" ] || return 0
     # Output: "[tag] <display> :: <url or raw>"
-    # We keep the whole line after '::' as the raw RHS, or the entire line if no '::'
     grep -vE '^\s*(#|$)' "$file" | while IFS= read -r line; do
         case "$line" in
         *"::"*)
@@ -55,7 +53,7 @@ emit() {
     done
 }
 
-# Build combined list
+# Build combined list and show menu
 choice="$({
     emit personal "$PERS_FILE"
     emit work "$WORK_FILE"
@@ -69,25 +67,18 @@ tag="${tag#\[}"
 raw="${choice##* :: }"
 
 # Strip inline comments and trim
-raw="$(
-    printf '%s' "$raw" |
-        sed -e 's/[[:space:]]\+#.*$//' \
-            -e 's/[[:space:]]\/\/.*$//' \
-            -e 's/^[[:space:]]*//' \
-            -e 's/[[:space:]]*$//'
-)"
+raw="$(printf '%s' "$raw" |
+    sed -e 's/[[:space:]]\+#.*$//' \
+        -e 's/[[:space:]]\/\/.*$//' \
+        -e 's/^[[:space:]]*//' \
+        -e 's/[[:space:]]*$//')"
 
 # Ensure scheme
 case "$raw" in
-    http://* | https://* | file://* | about:* | chrome:*)
-        url="$raw"
-        ;;
-    *)
-        url="https://$raw"
-        ;;
+    http://*|https://*|file://*|about:*|chrome:*) url="$raw" ;;
+    *) url="https://$raw" ;;
 esac
 
-# Pick browser by tag
 open_with() {
     cmd="$1"
     if [ -n "$cmd" ]; then
@@ -101,5 +92,5 @@ case "$tag" in
     work)     open_with "$BRAVE" ;;
 esac
 
-# Fallback if specific browser not found
+# Fallback
 nohup $FALLBACK "$url" >/dev/null 2>&1 &
