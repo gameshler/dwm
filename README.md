@@ -9,7 +9,7 @@
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/gameshler/arch-gameshler/main/start.sh)
 ```
-### Bookmarks Menu (Optional)
+**Bookmarks Menu (Optional)**
 
 > Select bookmarks for personal and work files
 > make sure bookmarks.html is in the same directory
