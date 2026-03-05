@@ -50,36 +50,14 @@ static const char *colors[][3] = {
 };
 
 static const char *const autostart[] = {
-    "dbus-update-activation-environment",
-    "--systemd",
-    "--all",
-    NULL,
-    "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1",
-    NULL,
-    "flameshot",
-    NULL,
-    "dunst",
-    NULL,
-    "picom",
-    "-b",
-    NULL,
-    "sh",
-    "-c",
-    "feh --randomize --bg-fill ~/Pictures/backgrounds/*",
-    NULL,
-    "sh",
-    "-c",
-    "/usr/bin/dex -a",
-    NULL,
-    "xrandr",
-    "--output",
-    "DP-2",
-    "--mode",
-    "1920x1080",
-    "--rate",
-    "239.76",
-    NULL,
-    NULL /* terminate */
+    "dbus-update-activation-environment", "--systemd", "--all", NULL,
+    "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1", NULL,
+    "flameshot", NULL,
+    "dunst", NULL,
+    "picom", "-b", NULL,
+    "sh", "-c", "feh --randomize --bg-fill ~/Pictures/backgrounds/*", NULL,
+    "sh", "-c", "/usr/bin/dex -a", NULL,
+    NULL 
 };
 
 /* tagging */
