@@ -30,6 +30,8 @@ install: all
 	chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
 	mkdir -p /usr/share/xsessions/
 	test -f /usr/share/xsessions/dwm.desktop || install -Dm644 dwm.desktop /usr/share/xsessions/
+	mkdir -p /etc/xdg/autostart
+	install -Dm644 set-refresh.desktop /etc/xdg/autostart/set-refresh.desktop
 	test -f /home/${SUDO_USER}/.xinitrc || install -Dm644 .xinitrc /home/${SUDO_USER}/.xinitrc
 	mkdir -p /home/${SUDO_USER}/.config/polybar
 	cp -rf polybar/* /home/${SUDO_USER}/.config/polybar/
