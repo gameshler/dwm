@@ -1,10 +1,9 @@
-/** Basic config file **/
-
 configuration {
+  font: "FiraCode Nerd Font 13";
   show-icons: true;
   icon-theme: "Papirus";
   display-drun: "  ";
   display-window: "﩯 ";
   display-combi: "  ";
 }
-@theme "themes/sidetab-nord.rasi"
+@theme "themes/nord.rasi"
