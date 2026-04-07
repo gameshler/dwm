@@ -1,5 +1,5 @@
 configuration {
-  font: "FiraCode Nerd Font 13";
+  font: "FiraCode Nerd Font 14";
   show-icons: true;
   icon-theme: "Papirus";
   display-drun: "  ";
