@@ -20,7 +20,7 @@ echo -e "\nActive window:"
 xprop -root _NET_ACTIVE_WINDOW
 
 echo -e "\n=== Monitor Information ==="
-if command -v xrandr > /dev/null 2>&1; then
+if command -v xrandr >/dev/null 2>&1; then
     echo "Connected monitors:"
     xrandr --query | grep " connected" | while read -r line; do
         monitor=$(echo "$line" | awk '{print $1}')
@@ -40,7 +40,7 @@ if [ -n "$(xprop -root _NET_CLIENT_LIST | cut -d'#' -f2)" ]; then
             echo -e "\n--- Window ID: $win_id ---"
             xprop -id "$win_id" WM_NAME 2>/dev/null | cut -d'=' -f2 || echo "  Name: (unknown)"
             xprop -id "$win_id" _NET_WM_DESKTOP 2>/dev/null || echo "  Desktop: (not set)"
-            
+
             # Get window geometry to check if visible
             win_geom=$(xwininfo -id "$win_id" 2>/dev/null | grep "Absolute upper-left X")
             if [ -n "$win_geom" ]; then

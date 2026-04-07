@@ -1,16 +1,9 @@
 # dwm - dynamic window manager
 # See LICENSE file for copyright and license details.
 
-.SILENT:
-
 include config.mk
 
-USER_HOME ?= $(shell getent passwd $(or $(SUDO_USER),$(USER)) 2>/dev/null | cut -d: -f6)
-OWNER     := $(or $(SUDO_USER),$(USER))
-DATA_DIR  := ${USER_HOME}/.local/share/dwm
-CFG_DIR   := ${USER_HOME}/.config
-
-SRC = drw.c dwm.c util.c tomlparser.c
+SRC = drw.c dwm.c util.c
 OBJ = ${SRC:.c=.o}
 
 all: dwm
@@ -30,59 +23,32 @@ clean:
 	rm -f dwm ${OBJ} *.orig *.rej
 
 install: all
-	@echo ""
-	@echo "==> Installing dwm binary and man page..."
+	mkdir -p ${DESTDIR}${PREFIX}/bin
 	install -Dm755 dwm ${DESTDIR}${PREFIX}/bin/dwm
-	sed "s/VERSION/${VERSION}/g" dwm.1 | install -Dm644 /dev/stdin ${DESTDIR}${MANPREFIX}/man1/dwm.1
-	@echo "==> Setting up X session entries..."
+	mkdir -p ${DESTDIR}${MANPREFIX}/man1
+	sed "s/VERSION/${VERSION}/g" < dwm.1 > ${DESTDIR}${MANPREFIX}/man1/dwm.1
+	chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
 	mkdir -p /usr/share/xsessions/
-	install -Dm644 dwm.desktop /usr/share/xsessions/
+	test -f /usr/share/xsessions/dwm.desktop || install -Dm644 dwm.desktop /usr/share/xsessions/
 	mkdir -p /etc/xdg/autostart
 	install -Dm644 set-refresh.desktop /etc/xdg/autostart/set-refresh.desktop
-	install -Dm644 scripts/.xinitrc ${USER_HOME}/.xinitrc
-	@echo "==> Syncing local repo to data dir..."
-	mkdir -p ${DATA_DIR}
-	if [ "$$(realpath .)" != "$$(realpath ${DATA_DIR})" ]; then \
-		cp -rf . ${DATA_DIR}/; \
-	fi
-	@echo "==> Installing config directories..."
-	for dir in config/*/; do \
-		dst=${CFG_DIR}/$$(basename "$$dir"); \
-		[ -L "$$dst" ] && rm -f "$$dst"; \
-		cp -rfL --remove-destination "$$dir" "$$dst"; \
-	done
-	@echo "==> Installing scripts to PATH..."
-	for f in scripts/*; do \
-		case "$$(basename $$f)" in autostart*) continue;; esac; \
-		install -Dm755 "$$f" ${DESTDIR}${PREFIX}/bin/$$(basename $$f); \
-	done
-	@echo "==> Seeding user config (skipping existing files)..."
-	mkdir -p ${CFG_DIR}/dwm
-	test -f ${CFG_DIR}/dwm/hotkeys.toml || install -Dm644 config/hotkeys.toml ${CFG_DIR}/dwm/hotkeys.toml
-	test -f ${CFG_DIR}/dwm/theme.toml  || install -Dm644 config/theme.toml  ${CFG_DIR}/dwm/theme.toml
-	test -f ${CFG_DIR}/dwm/window-rules.toml || install -Dm644 config/window-rules.toml ${CFG_DIR}/dwm/window-rules.toml
-	@echo "==> Fixing ownership and permissions..."
-	find ${DATA_DIR} -name '*.sh' -o -name '*.py' | xargs -r chmod +x
-	for dir in config/*/; do \
-		b=$$(basename $$dir); \
-		find "${CFG_DIR}/$$b" -name '*.sh' -o -name '*.py' 2>/dev/null | xargs -r chmod +x; \
-		chown -R ${OWNER}: "${CFG_DIR}/$$b"; \
-	done
-	chown -R ${OWNER}: ${DATA_DIR} && chown ${OWNER}: ${USER_HOME}/.xinitrc 2>/dev/null || true
-	@echo ""
-	@echo "  dwm installed successfully."
-	@echo "  Log out and select 'dwm', or start with: startx"
-	@echo ""
+	test -f /home/${SUDO_USER}/.xinitrc || install -Dm644 .xinitrc /home/${SUDO_USER}/.xinitrc
+	mkdir -p /home/${SUDO_USER}/.config/polybar
+	cp -rf config/polybar/* /home/${SUDO_USER}/.config/polybar/
+	chmod +x /home/${SUDO_USER}/.config/polybar/launch.sh
+	chmod +x /home/${SUDO_USER}/.config/polybar/scripts/dwm-tags.sh
+	mkdir -p ${DESTDIR}${PREFIX}/bin
+	install -Dm755 scripts/* ${DESTDIR}${PREFIX}/bin/
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/dwm \
 		${DESTDIR}${MANPREFIX}/man1/dwm.1 \
-		/usr/share/xsessions/dwm.desktop
+		${DESTDIR}/usr/share/xsessions/dwm.desktop
 
 release: dwm
 	mkdir -p release
-	cp -f dwm dwm.desktop .xinitrc release/
+	cp -f dwm dwm.desktop .xinitrc set-refresh.desktop release/
 	cp -rf config scripts release/
-	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop .xinitrc config scripts
+	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop set-refresh.desktop .xinitrc config scripts
 
 .PHONY: all clean install uninstall release
