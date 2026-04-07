@@ -34,7 +34,7 @@ install: all
 	install -Dm644 set-refresh.desktop /etc/xdg/autostart/set-refresh.desktop
 	test -f /home/${SUDO_USER}/.xinitrc || install -Dm644 .xinitrc /home/${SUDO_USER}/.xinitrc
 	mkdir -p /home/${SUDO_USER}/.config/polybar
-	cp -rf config/polybar/* /home/${SUDO_USER}/.config/polybar/
+	cp -rf polybar/* /home/${SUDO_USER}/.config/polybar/
 	chmod +x /home/${SUDO_USER}/.config/polybar/launch.sh
 	chmod +x /home/${SUDO_USER}/.config/polybar/scripts/dwm-tags.sh
 	mkdir -p ${DESTDIR}${PREFIX}/bin
@@ -47,8 +47,12 @@ uninstall:
 
 release: dwm
 	mkdir -p release
-	cp -f dwm dwm.desktop .xinitrc set-refresh.desktop release/
-	cp -rf config scripts release/
-	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop set-refresh.desktop .xinitrc config scripts
+	cp -f dwm release/
+	cp -f dwm.desktop release/
+	cp -f set-refresh.desktop release/
+	cp -f .xinitrc release/
+	cp -rf polybar release/
+	cp -rf scripts release/
+	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop set-refresh.desktop .xinitrc polybar scripts
 
 .PHONY: all clean install uninstall release
