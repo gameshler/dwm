@@ -344,7 +344,7 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
 /* hot-reload */
 static void load_hotkeys_toml(const char *user_path, const char *default_path);
-static void load_theme.toml(const char *user_path, const char *default_path);
+static void load_themes_toml(const char *user_path, const char *default_path);
 static void load_rules_toml(const char *user_path, const char *default_path);
 static void notify_bad_config(const char *filename, const char *reason);
 static void reload_config(void);
@@ -3045,7 +3045,7 @@ static void load_hotkeys_toml(const char *user_path, const char *default_path) {
   fprintf(stderr, "dwm: loaded %d keybinds from hotkeys config\n", nk);
 }
 
-static void load_theme.toml(const char *user_path, const char *default_path) {
+static void load_themes_toml(const char *user_path, const char *default_path) {
   static TomlDoc doc;
   int parsed = 0;
   if (user_path && user_path[0]) {
@@ -3208,7 +3208,7 @@ static void load_rules_toml(const char *user_path, const char *default_path) {
 
 static void reload_config(void) {
   load_hotkeys_toml(toml_hotkeys_path, toml_hotkeys_default_path);
-  load_theme.toml(toml_themes_path, toml_themes_default_path);
+  load_themes_toml(toml_themes_path, toml_themes_default_path);
   load_rules_toml(toml_rules_path, toml_rules_default_path);
   if (dpy)
     grabkeys();
