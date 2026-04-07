@@ -35,6 +35,7 @@ install: all
 	install -Dm755 dwm ${DESTDIR}${PREFIX}/bin/dwm
 	sed "s/VERSION/${VERSION}/g" dwm.1 | install -Dm644 /dev/stdin ${DESTDIR}${MANPREFIX}/man1/dwm.1
 	@echo "==> Setting up X session entries..."
+	mkdir -p /usr/share/xsessions/
 	install -Dm644 dwm.desktop /usr/share/xsessions/
 	mkdir -p /etc/xdg/autostart
 	install -Dm644 set-refresh.desktop /etc/xdg/autostart/set-refresh.desktop
