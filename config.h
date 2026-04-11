@@ -71,10 +71,11 @@ static const Rule rules[] = {
        isterminal  noswallow  monitor  */
     {"ghostty", NULL, NULL, 0, 0, 1, 0, -1},
     {"thunar", NULL, NULL, 0, 0, 0, 0, -1},
-    {"Google-chrome", NULL, NULL, 1 << 1, 0, 0, 0, -1},
-    {"librewolf", NULL, NULL, 1 << 1, 0, 0, 0, -1},
-    {"discord", NULL, NULL, 1 << 2, 0, 0, 0, -1},
-    {"Slack", NULL, NULL, 1 << 3, 0, 0, 0, -1},
+    {"Google-chrome", NULL, NULL, 0, 0, 0, 0, -1},
+    {"librewolf", NULL, NULL, 0, 0, 0, 0, -1},
+    {"discord", NULL, NULL, 1 << 1, 0, 0, 0, -1},
+    {"Slack", NULL, NULL, 1 << 1, 0, 0, 0, -1},
+    {"Steam", NULL, NULL, 1 << 5, 0, 0, 0, -1},
 
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
@@ -113,22 +114,42 @@ static const char *launchercmd[] = {"rofi", "-show", "drun", NULL};
 static const char *termcmd[] = {"ghostty", NULL};
 
 static Keychord *keychords[] = {
-    /* modifier                     key                        function argument
-     */
+
+    /* Launchers */ 
+    
     &((Keychord){1, {{MODKEY, XK_r}}, spawn, {.v = launchercmd}}),
-    &((Keychord){1, {{MODKEY | ControlMask, XK_r}}, spawn, SHCMD("protonrestart")}),
     &((Keychord){1, {{MODKEY, XK_x}}, spawn, {.v = termcmd}}),
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_w}}, spawn, SHCMD("feh --randomize --bg-fill ~/Pictures/backgrounds/*")}),
+    
+    /* Web Apps */ 
+
     &((Keychord){1, {{MODKEY, XK_b}}, spawn, SHCMD("xdg-open https://")}),
+    &((Keychord){1, {{MODKEY, XK_a}}, spawn, SHCMD("xdg-open https://chatgpt.com")}),
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_a}}, spawn, SHCMD("xdg-open https://gemeni.google.com/")}),
+
+    /* Screenshots */ 
+
     &((Keychord){1, {{MODKEY, XK_p}}, spawn, SHCMD("flameshot full -p /media/drive/Screenshots/")}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_p}}, spawn, SHCMD("flameshot gui -p /media/drive/Screenshots/")}),
     &((Keychord){1, {{MODKEY | ControlMask, XK_p}}, spawn, SHCMD("flameshot gui --clipboard")}),
+
+    /* Files & Utilities */ 
+
     &((Keychord){1, {{MODKEY, XK_e}}, spawn, SHCMD("xdg-open .")}),
-    &((Keychord){1, {{MODKEY | ShiftMask, XK_w}}, spawn, SHCMD("feh --randomize --bg-fill ~/Pictures/backgrounds/*")}),
-    &((Keychord){1, {{MODKEY | ShiftMask, XK_b}}, togglebar, {0}}),
+    &((Keychord){1, {{MODKEY | ControlMask, XK_r}}, spawn, SHCMD("protonrestart")}),
+
+    /* Window Focus & Movement */ 
+
     &((Keychord){1, {{MODKEY, XK_j}}, focusstack, {.i = +1}}),
     &((Keychord){1, {{MODKEY, XK_k}}, focusstack, {.i = -1}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_j}}, movestack, {.i = +1}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_k}}, movestack, {.i = -1}}),
+    &((Keychord){1, {{MODKEY, XK_Return}}, zoom, {0}}),
+    &((Keychord){1, {{MODKEY, XK_Tab}}, view, {0}}),
+    &((Keychord){1, {{MODKEY, XK_q}}, killclient, {0}}),
+
+    /* Master / Stack Sizing */ 
+
     &((Keychord){1, {{MODKEY, XK_i}}, incnmaster, {.i = +1}}),
     &((Keychord){1, {{MODKEY, XK_d}}, incnmaster, {.i = -1}}),
     &((Keychord){1, {{MODKEY, XK_h}}, setmfact, {.f = -0.05}}),
@@ -136,25 +157,39 @@ static Keychord *keychords[] = {
     &((Keychord){1, {{MODKEY | ShiftMask, XK_h}}, setcfact, {.f = +0.25}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_l}}, setcfact, {.f = -0.25}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_o}}, setcfact, {.f = 0.00}}),
-    &((Keychord){1, {{MODKEY, XK_Return}}, zoom, {0}}),
-    &((Keychord){1, {{MODKEY, XK_Tab}}, view, {0}}),
-    &((Keychord){1, {{MODKEY, XK_q}}, killclient, {0}}),
+
+    /* Layouts */
+
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_b}}, togglebar, {0}}),
     &((Keychord){1, {{MODKEY, XK_t}}, setlayout, {.v = &layouts[0]}}),
     &((Keychord){1, {{MODKEY, XK_f}}, setlayout, {.v = &layouts[1]}}),
     &((Keychord){1, {{MODKEY, XK_m}}, fullscreen, {0}}),
     &((Keychord){1, {{MODKEY, XK_space}}, togglefloating, {0}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_m}}, togglefloating, {0}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_y}}, togglefakefullscreen, {0}}),
-    &((Keychord){1, {{MODKEY, XK_0}}, view, {.ui = ~0}}),
+
+    /* Multi-monitor */ 
+
     &((Keychord){1, {{MODKEY, XK_comma}}, focusmon, {.i = -1}}),
     &((Keychord){1, {{MODKEY, XK_period}}, focusmon, {.i = +1}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_comma}}, tagmon, {.i = -1}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_period}}, tagmon, {.i = +1}}),
+
+    /* Session / Power */ 
+
+    &((Keychord){1, {{MODKEY, XK_0}}, view, {.ui = ~0}}),
     &((Keychord){1, {{MODKEY | ControlMask, XK_q}}, spawn, SHCMD("$HOME/.config/rofi/powermenu.sh")}),
-    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_t}}, spawn, SHCMD("$HOME/.config/rofi/repo-finder.sh")}),
-    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_b}}, spawn, SHCMD("$HOME/.config/rofi/bookmarksmenu.sh")}),
     &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_r}}, spawn, SHCMD("systemctl reboot")}),
     &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_s}}, spawn, SHCMD("systemctl suspend")}),
+    &((Keychord){1, {{MODKEY|ShiftMask, XK_q}}, quit, {0}}),
+
+    /* Scripts */ 
+
+    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_t}}, spawn, SHCMD("$HOME/.config/rofi/repo-finder.sh")}),
+    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_b}}, spawn, SHCMD("$HOME/.config/rofi/bookmarksmenu.sh")}),
+    
+    /* Tags */
+
     TAGKEYS(                        XK_1,                      0)
     TAGKEYS(                        XK_2,                      1)
     TAGKEYS(                        XK_3,                      2)
@@ -164,7 +199,6 @@ static Keychord *keychords[] = {
     TAGKEYS(                        XK_7,                      6)
     TAGKEYS(                        XK_8,                      7)
     TAGKEYS(                        XK_9,                      8)
-    &((Keychord){1, {{MODKEY|ShiftMask, XK_q}}, quit, {0}}),
 };
 
 /* button definitions */
