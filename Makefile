@@ -3,6 +3,10 @@
 
 include config.mk
 
+USER_HOME ?= $(shell getent passwd $(or $(SUDO_USER),$(USER)) 2>/dev/null | cut -d: -f6)
+OWNER     := $(or $(SUDO_USER),$(USER))
+CFG_DIR   := ${USER_HOME}/.config
+
 SRC = drw.c dwm.c util.c
 OBJ = ${SRC:.c=.o}
 
@@ -23,20 +27,32 @@ clean:
 	rm -f dwm ${OBJ} *.orig *.rej
 
 install: all
+	@echo "==> Installing DWM..."
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	install -Dm755 dwm ${DESTDIR}${PREFIX}/bin/dwm
 	mkdir -p ${DESTDIR}${MANPREFIX}/man1
 	sed "s/VERSION/${VERSION}/g" < dwm.1 > ${DESTDIR}${MANPREFIX}/man1/dwm.1
 	chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
+	@echo "==> Creating Xsessions..."
 	mkdir -p /usr/share/xsessions/
 	test -f /usr/share/xsessions/dwm.desktop || install -Dm644 dwm.desktop /usr/share/xsessions/
 	mkdir -p /etc/xdg/autostart
 	install -Dm644 set-refresh.desktop /etc/xdg/autostart/set-refresh.desktop
-	test -f /home/${SUDO_USER}/.xinitrc || install -Dm644 scripts/.xinitrc /home/${SUDO_USER}/.xinitrc
-	mkdir -p /home/${SUDO_USER}/.config/polybar
-	cp -rf config/polybar/* /home/${SUDO_USER}/.config/polybar/
-	chmod +x /home/${SUDO_USER}/.config/polybar/launch.sh
-	chmod +x /home/${SUDO_USER}/.config/polybar/scripts/dwm-tags.sh
+	test -f ${USER_HOME}/.xinitrc || install -Dm644 scripts/.xinitrc ${USER_HOME}/.xinitrc
+
+	@echo "==> Installing config directories..."
+	for dir in config/*/; do \
+		dst=${CFG_DIR}/$$(basename "$$dir"); \
+		[ -L "$$dst" ] && rm -f "$$dst"; \
+		cp -rfL --remove-destination "$$dir" "$$dst"; \
+	done
+	
+	for dir in config/*/; do \
+		b=$$(basename $$dir); \
+		find "${CFG_DIR}/$$b" -name '*.sh' -o -name '*.py' 2>/dev/null | xargs -r chmod +x; \
+		chown -R ${OWNER}: "${CFG_DIR}/$$b"; \
+	done
+
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	install -Dm755 scripts/* ${DESTDIR}${PREFIX}/bin/
 
