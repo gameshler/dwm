@@ -33,7 +33,7 @@ static const char *altbarcmd = "$HOME/.config/polybar/launch.sh";
 #define SHOWWINICON 1 /* 0 means no winicon */
 static const char *fonts[] = {
     "FiraCode Nerd Font "
-    "Mono:size=14:antialias=true:autohint=true:hintstyle=hintfull",
+    "size=14:antialias=true:autohint=true:hintstyle=hintfull",
     "NotoColorEmoji:pixelsize=16:antialias=true:autohint=true"};
 static const char normbordercolor[] = "#3B4252";
 static const char normbgcolor[] =
