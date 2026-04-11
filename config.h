@@ -125,7 +125,7 @@ static Keychord *keychords[] = {
 
     &((Keychord){1, {{MODKEY, XK_b}}, spawn, SHCMD("xdg-open https://")}),
     &((Keychord){1, {{MODKEY, XK_a}}, spawn, SHCMD("xdg-open https://chatgpt.com")}),
-    &((Keychord){1, {{MODKEY | ShiftMask, XK_a}}, spawn, SHCMD("xdg-open https://gemeni.google.com/")}),
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_a}}, spawn, SHCMD("xdg-open https://gemini.google.com/")}),
 
     /* Screenshots */ 
 
