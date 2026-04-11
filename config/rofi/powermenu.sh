@@ -44,7 +44,7 @@ confirmations=(reboot shutdown logout)
 dryrun=false
 showsymbols=true
 showtext=true
-symbols_font="MesloLGS Nerd Font Mono"
+symbols_font="FireCode Nerd Font Mono"
 
 function check_valid {
     option="$1"
