@@ -52,8 +52,9 @@ install: all
 	done
 
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	install -Dm755 scripts/* ${DESTDIR}${PREFIX}/bin/
-	chmod +x ${DESTDIR}${PREFIX}/bin/display-setup.sh 
+	for f in scripts/*; do \
+		install -Dm755 "$$f" ${DESTDIR}${PREFIX}/bin/$$(basename $$f); \
+	done	
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/dwm \
