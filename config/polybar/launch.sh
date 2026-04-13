@@ -1,84 +1,95 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 THEME="minimal"
 
-# Kill existing polybar instances only if running
-if pgrep -u $UID -x polybar >/dev/null 2>&1; then
+command -v polybar >/dev/null 2>&1 || {
+    echo "ERROR: polybar not installed" >&2
+    exit 1
+}
+
+if pgrep -u "$UID" -x polybar >/dev/null 2>&1; then
     killall polybar
-    while pgrep -u $UID -x polybar >/dev/null; do sleep 0.2; done
+    while pgrep -u "$UID" -x polybar >/dev/null 2>&1; do
+        sleep 0.2
+    done
 fi
 
-# Determine config path: prefer ~/.config/polybar (installed), fallback to repo location
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 if [ -f "$HOME/.config/polybar/themes/$THEME/config.ini" ]; then
     CONFIG_DIR="$HOME/.config/polybar"
 elif [ -f "$SCRIPT_DIR/themes/$THEME/config.ini" ]; then
     CONFIG_DIR="$SCRIPT_DIR"
 else
-    CONFIG_DIR="$HOME/.config/polybar"
+    echo "ERROR: No config found for theme '$THEME'" >&2
+    exit 1
 fi
 
 CONFIG_FILE="$CONFIG_DIR/themes/$THEME/config.ini"
 LAPTOP_CONFIG_FILE="$CONFIG_DIR/themes/$THEME/laptop-config.ini"
 
-if command ls /sys/class/power_supply/ 2>/dev/null | command grep -q '^BAT'; then
-    CONFIG_FILE=$LAPTOP_CONFIG_FILE
-    # Detect battery and adapter names for polybar battery module
-    export DWM_BATTERY=$(command ls /sys/class/power_supply/ 2>/dev/null | command grep -E '^BAT[0-9]' | head -1)
-    export DWM_ADAPTER=$(command ls /sys/class/power_supply/ 2>/dev/null | command grep -Ev '^BAT' | head -1)
+if [ -d /sys/class/power_supply ]; then
+    for dev in /sys/class/power_supply/*; do
+        [ -f "$dev/type" ] || continue
+
+        case "$(cat "$dev/type")" in
+        Battery)
+            export DWM_BATTERY="$(basename "$dev")"
+            CONFIG_FILE="$LAPTOP_CONFIG_FILE"
+            ;;
+        Mains)
+            export DWM_ADAPTER="$(basename "$dev")"
+            ;;
+        esac
+    done
+
 fi
 
-# Check if xrandr is available and get monitor list
+[ -f "$CONFIG_FILE" ] || {
+    echo "ERROR: Config file missing: $CONFIG_FILE" >&2
+    exit 1
+}
+
 if command -v xrandr >/dev/null 2>&1; then
-    # Get list of connected monitors
-    mapfile -t MONITORS < <(xrandr --query | command grep " connected" | cut -d" " -f1)
-    MONITOR_COUNT=${#MONITORS[@]}
+    XRANDR_OUTPUT="$(xrandr --query)"
 
-    # Detect primary monitor
-    PRIMARY_MONITOR=$(xrandr --query | command grep " connected primary" | cut -d" " -f1)
+    mapfile -t MONITORS < <(
+        printf "%s\n" "$XRANDR_OUTPUT" | grep " connected" | cut -d" " -f1
+    )
 
-    # If no primary monitor is explicitly set, use the first one
-    if [ -z "$PRIMARY_MONITOR" ]; then
-        PRIMARY_MONITOR=${MONITORS[0]}
-        echo "No primary monitor detected, using first monitor: $PRIMARY_MONITOR"
-    else
-        echo "Primary monitor detected: $PRIMARY_MONITOR"
+    MONITOR_COUNT="${#MONITORS[@]}"
+
+    PRIMARY_MONITOR="$(
+        printf "%s\n" "$XRANDR_OUTPUT" | grep " connected primary" | cut -d" " -f1
+    )"
+
+    if [ -z "$PRIMARY_MONITOR" ] && [ "$MONITOR_COUNT" -gt 0 ]; then
+        PRIMARY_MONITOR="${MONITORS[0]}"
     fi
 
-    echo "Detected $MONITOR_COUNT monitors: ${MONITORS[*]}"
-
-    if [ $MONITOR_COUNT -eq 1 ]; then
-        # Single monitor setup - launch main bar with tray and EWMH
-        echo "Single monitor setup - launching main polybar with tray and EWMH on ${MONITORS[0]}"
-        MONITOR=${MONITORS[0]} polybar main -c "$CONFIG_FILE" &
-    else
-        # Multi-monitor setup
-        echo "Multi-monitor setup - EWMH and systray only on primary monitor"
-
-        # Launch polybar on all connected monitors
-        for monitor in "${MONITORS[@]}"; do
-            if [ "$monitor" = "$PRIMARY_MONITOR" ]; then
-                # Primary monitor gets the tray and EWMH
-                MONITOR=$monitor polybar main -c "$CONFIG_FILE" &
-                echo "Launched primary polybar with tray and EWMH on $monitor"
-            else
-                # Secondary monitors don't get the tray or EWMH
-                MONITOR=$monitor polybar secondary -c "$CONFIG_FILE" &
-                echo "Launched secondary polybar without tray on $monitor"
-            fi
-        done
-    fi
 else
-    # Fallback: launch main bar if xrandr is not available
-    echo "xrandr not available - launching fallback main polybar with tray"
-    polybar main -c "$CONFIG_FILE" &
+    MONITOR_COUNT=0
 fi
+launch_bar() {
+    MONITOR="$1" polybar "$2" -c "$CONFIG_FILE" &
+}
 
-# Wait for Polybar to be ready before returning.
-# This ensures tray apps started after this script can find the tray owner.
-for i in $(seq 1 30); do
-    if xdotool search --class Polybar >/dev/null 2>&1; then
-        break
-    fi
-    sleep 0.1
-done
+case "${MONITOR_COUNT:-0}" in
+0)
+    echo "No monitors detected (or xrandr missing), launching fallback"
+    polybar main -c "$CONFIG_FILE" &
+    ;;
+1)
+    launch_bar "${MONITORS[0]}" main
+    ;;
+*)
+    for monitor in "${MONITORS[@]}"; do
+        if [ "$monitor" = "$PRIMARY_MONITOR" ]; then
+            launch_bar "$monitor" main
+        else
+            launch_bar "$monitor" secondary
+        fi
+    done
+    ;;
+esac
