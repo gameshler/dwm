@@ -54,6 +54,7 @@ install: all
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	for f in scripts/*; do \
 		install -Dm755 "$$f" ${DESTDIR}${PREFIX}/bin/$$(basename $$f); \
+		find "${DESTDIR}${PREFIX}/bin/$$(basename $$f)" -name '*.sh' -o -name '*.py' 2>/dev/null | xargs -r chmod +x; \
 	done	
 
 uninstall:
