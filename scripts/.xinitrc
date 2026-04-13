@@ -1,7 +1,3 @@
 #!/bin/bash
 
-dbus-run-session -- sh -c '
-  ~/.local/share/dwm/config/polybar/launch.sh &
-  xrandr --output DisplayPort-1 --mode 1920x1080 --rate 239.76 &
-  exec dwm
-'
+dbus-run-session -- sh -c ' exec dwm '

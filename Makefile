@@ -36,8 +36,6 @@ install: all
 	@echo "==> Creating Xsessions..."
 	mkdir -p /usr/share/xsessions/
 	test -f /usr/share/xsessions/dwm.desktop || install -Dm644 dwm.desktop /usr/share/xsessions/
-	mkdir -p /etc/xdg/autostart
-	install -Dm644 set-refresh.desktop /etc/xdg/autostart/set-refresh.desktop
 	test -f ${USER_HOME}/.xinitrc || install -Dm644 scripts/.xinitrc ${USER_HOME}/.xinitrc
 
 	@echo "==> Installing config directories..."
@@ -63,8 +61,8 @@ uninstall:
 
 release: dwm
 	mkdir -p release
-	cp -f dwm dwm.desktop set-refresh.desktop .xinitrc release/	
+	cp -f dwm dwm.desktop .xinitrc release/	
 	cp -rf config scripts release/
-	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop set-refresh.desktop .xinitrc config scripts
+	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop .xinitrc config scripts
 
 .PHONY: all clean install uninstall release

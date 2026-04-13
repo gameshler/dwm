@@ -422,10 +422,15 @@ static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
 static xcb_connection_t *xcon;
+static const char *altbarclass = "Polybar";
+static const char *alttrayname = "tray";
+
 unsigned int currentkey = 0;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
+
+static const unsigned int borderpx = 1;
 
 #if SHOWWINICON
 static void freeicon(Client *c);
@@ -1659,7 +1664,6 @@ void keypress(XEvent *e) {
   }
   currentkey = 0;
   grabkeys();
-
 }
 
 void killclient(const Arg *arg) {
@@ -3015,10 +3019,7 @@ void spawn(const Arg *arg) {
                environ);
 }
 
-void spawnbar() {
-  if (*altbarcmd)
-    system(altbarcmd);
-}
+void spawnbar() { system("$HOME/.config/polybar/launch.sh"); }
 
 void tag(const Arg *arg) {
   unsigned int montags;

@@ -6,7 +6,6 @@ static const unsigned int refresh_rate =
             for smoother window interactions */
 static const unsigned int enable_noborder =
     1; /* toggles noborder feature (0=disabled, 1=enabled) */
-static const unsigned int borderpx = 1; /* border pixel of windows */
 static const unsigned int snap = 26;    /* snap pixel */
 static const int swallowfloating =
     1; /* 1 means swallow floating windows by default */
@@ -25,9 +24,6 @@ static const int showbar =
     1; /* 1 means show bar - needed for Polybar space calculation */
 static const int topbar = 1;                /* 0 means bottom bar */
 static const int usealtbar = 1;             /* 1 means use non-dwm status bar */
-static const char *altbarclass = "Polybar"; /* Alternate bar class name */
-static const char *alttrayname = "tray";    /* Polybar tray instance name */
-static const char *altbarcmd = "$HOME/.config/polybar/launch.sh";
 #define ICONSIZE 17   /* icon size */
 #define ICONSPACING 5 /* space between icon and title */
 #define SHOWWINICON 1 /* 0 means no winicon */
@@ -51,11 +47,12 @@ static const char *colors[][3] = {
 
 static const char *const autostart[] = {
     "dbus-update-activation-environment", "--systemd", "--all", NULL,
+    "sh", "-c", "$HOME/.local/bin/display-setup.sh", NULL,
     "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1", NULL,
     "flameshot", NULL,
     "dunst", NULL,
     "picom", "-b", NULL,
-    "sh", "-c", "feh --randomize --bg-fill ~/Pictures/backgrounds/*", NULL,
+    "sh", "-c", "feh --randomize --bg-fill $HOME/Pictures/backgrounds/*", NULL,
     "sh", "-c", "/usr/bin/dex -a", NULL,
     NULL 
 };
