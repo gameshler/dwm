@@ -1,37 +1,28 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-xrandr --query | awk '
-/ connected/ {
-output=$1
-preferred=""
-max_rate=0
+# Get list of connected outputs
+outputs=$(xrandr --query | grep " connected" | cut -d" " -f1)
 
-while (getline) {
-    if ($0 !~ /^[ ]+[0-9]+x[0-9]+/)
-        break
+xrandr_cmd="xrandr"
+prev_output=""
 
-    res=$1
+for output in $outputs; do
+    # Get the native resolution 
+    native_res=$(xrandr --query | sed -n "/^$output connected/,/^[A-Z]/p" | grep -E "^   [0-9]+x[0-9]+" | head -n1 | awk '{print $1}')
+    
+    # Get all refresh rates for that specific resolution and find the max
+    max_rate=$(xrandr --query | sed -n "/^$output connected/,/^[A-Z]/p" | grep "$native_res" | sed "s/$native_res//" | grep -oE "[0-9.]+" | sort -rn | head -n1)
 
-    if ($0 ~ /\+/) {
-        preferred=res
-        max_rate=0
-
-        for (i=2; i<=NF; i++) {
-            rate=$i
-            gsub(/[*+]/, "", rate)
-            if (rate+0 > max_rate)
-                max_rate=rate
-        }
-
-        break
-    }
-}
-
-if (preferred != "" && max_rate > 0)
-    printf "%s %s %s\n", output, preferred, max_rate
-
-}
-' | while read -r out res rate; do
-    xrandr --output "$out" --mode "$res" --rate "$rate"
+    if [ -n "$native_res" ] && [ -n "$max_rate" ]; then
+        if [ -z "$prev_output" ]; then
+            # Set the first detected monitor as primary
+            xrandr_cmd="$xrandr_cmd --output $output --primary --mode $native_res --rate $max_rate"
+        else
+            xrandr_cmd="$xrandr_cmd --output $output --mode $native_res --rate $max_rate --right-of $prev_output"
+        fi
+        prev_output=$output
+    fi
 done
+
+eval "$xrandr_cmd"
+
