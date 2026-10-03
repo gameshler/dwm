@@ -1515,7 +1515,12 @@ pid_t getparentprocess(pid_t p) {
   if (!(f = fopen(buf, "r")))
     return 0;
 
-  fscanf(f, "%*u %*s %*c %u", &v);
+  /* Upstream discards this return value. glibc declares fscanf
+   * warn_unused_result, so a toolchain that enables _FORTIFY_SOURCE by default
+   * rejects that under -Werror. A failed parse means the parent is unknown,
+   * which is the same answer the fopen failure above returns. */
+  if (fscanf(f, "%*u %*s %*c %u", &v) != 1)
+    v = 0;
   fclose(f);
 #endif /* __linux__*/
 
@@ -2512,8 +2517,12 @@ void runautostart(void) {
     free(pathpfx);
   }
 
-  if (access(path, X_OK) == 0)
-    system(path);
+  /* Upstream discards both system() return values. glibc declares system
+   * warn_unused_result, so a toolchain that enables _FORTIFY_SOURCE by default
+   * rejects that under -Werror. An autostart script that will not run is worth
+   * saying out loud, but it is not fatal: dwm carries on either way. */
+  if (access(path, X_OK) == 0 && system(path) == -1)
+    fprintf(stderr, "dwm: could not run %s\n", path);
 
   /* now the non-blocking script */
   if (sprintf(path, "%s/%s", pathpfx, autostartsh) <= 0) {
@@ -2521,8 +2530,8 @@ void runautostart(void) {
     free(pathpfx);
   }
 
-  if (access(path, X_OK) == 0)
-    system(strcat(path, " &"));
+  if (access(path, X_OK) == 0 && system(strcat(path, " &")) == -1)
+    fprintf(stderr, "dwm: could not run %s\n", path);
 
   free(pathpfx);
   free(path);
