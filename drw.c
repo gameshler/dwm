@@ -328,7 +328,9 @@ void drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h,
 int drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h,
              unsigned int lpad, const char *text, int invert) {
   int ty, ellipsis_x = 0;
-  unsigned int tmpw, ew, ellipsis_w = 0, ellipsis_len, hash, h0, h1;
+  /* drw_font_getexts() always sets tmpw before it is read, but -flto inlines
+   * this and loses that proof, so -Wmaybe-uninitialized fires on it. */
+  unsigned int tmpw = 0, ew, ellipsis_w = 0, ellipsis_len, hash, h0, h1;
   XftDraw *d = NULL;
   Fnt *usedfont, *curfont, *nextfont;
   int utf8strlen, utf8charlen, utf8err, render = x || y || w || h;

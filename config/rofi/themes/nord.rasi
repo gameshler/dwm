@@ -1,11 +1,14 @@
+/* Same palette as config/quickshell/core/Theme.qml: Nord accents reground onto
+ * black, so rofi reads as the bar having grown a window rather than as a
+ * separate application. */
 * {
-    bg0:                #242424E6;
-    bg1:                #7E7E7E80;
-    bg2:                #8fbcbb45;
+    bg0:                #0A0A0CF2;
+    bg1:                #1A1A20FF;
+    bg2:                #88C0D026;
 
-    fg0:                #DEDEDE;
-    fg1:                #FFFFFF;
-    fg2:                #DEDEDE80;
+    fg0:                #E8E8EC;
+    fg1:                #88C0D0;
+    fg2:                #70707C;
 
     background-color:   transparent;
     text-color:         @fg0;
@@ -62,17 +65,17 @@ element {
 }
 
 element normal active {
-    text-color: @bg2;
+    text-color: @fg1;
 }
 
 element alternate active {
-    text-color: @bg2;
+    text-color: @fg1;
 }
 
 element selected normal, element selected active {
     background-color:   @bg2;
     text-color:         @fg1;
-    border-radius:      15px; 
+    border-radius:      8px;
 }
 
 element-icon {

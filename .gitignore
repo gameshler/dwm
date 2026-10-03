@@ -1,9 +1,6 @@
 # binaries
 /dwm
 
-# User config (created from config.def.h, not tracked)
-config.h
-
 # Patch Fail
 *.rej
 *.orig
@@ -14,5 +11,10 @@ config.h
 nohup.out
 .DS_STORE
 
+.qmlls.ini
+
 /release/**
 /release
+
+.context/
+.gstack/

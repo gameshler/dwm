@@ -1,32 +1,99 @@
-name: C CI
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          /var/cache/apt/archives
-        key: ${{ runner.os }}-apt-${{ hashFiles('**/Makefile') }}
-        restore-keys: |
-          ${{ runner.os }}-apt-
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev \
+            libx11-xcb-dev \
+            libxcb1-dev \
+            libxcb-res0-dev \
+            libxft-dev \
+            libxinerama-dev \
+            libxrender-dev \
+            libfontconfig1-dev \
+            libimlib2-dev
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y libx11-dev libxft-dev libxinerama-dev
+      # -Werror lives here, not in config.mk, so a local build on a newer
+      # compiler still produces a usable dwm.
+      - name: Build
+        run: make CC="cc -Werror"
 
-    - name: Build
-      run: make
-      continue-on-error: true
+  shell:
+    runs-on: ubuntu-latest
 
-    - name: Check Build Failure
-      if: ${{ failure() }}
-      run: echo "Build failed. Investigate the logs for details." && exit 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck and shfmt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+          curl -fsSL -o /tmp/shfmt \
+            https://github.com/mvdan/sh/releases/download/v3.10.0/shfmt_v3.10.0_linux_amd64
+          sudo install -m755 /tmp/shfmt /usr/local/bin/shfmt
+
+      - name: Lint
+        run: |
+          files=$(shfmt -f config debug scripts tests tools install.sh)
+          echo "$files"
+          # shellcheck disable=SC2086
+          shellcheck -x $files
+          shfmt -d $files
+
+  qml:
+    runs-on: ubuntu-latest
+    # Arch: qmllint needs Quickshell's QML modules present to resolve the import.
+    container: archlinux:latest
+
+    steps:
+      - name: Install dependencies
+        run: pacman -Sy --noconfirm --needed quickshell qt6-declarative git
+
+      - uses: actions/checkout@v4
+
+      - name: qmllint
+        env:
+          QMLLINT: /usr/lib/qt6/bin/qmllint
+        run: ./tools/qml-lint.sh
+
+  tests:
+    runs-on: ubuntu-latest
+    # Arch: the Xvfb test needs a real Quickshell rather than a stub.
+    container: archlinux:latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Sy --noconfirm --needed \
+            base-devel git \
+            libx11 libxinerama libxft libxcb imlib2 libxrender fontconfig \
+            quickshell qt6-declarative \
+            xorg-server-xvfb xorg-xprop xorg-xwininfo xorg-xsetroot xterm \
+            xdotool imagemagick procps-ng \
+            ttf-firacode-nerd inter-font
+
+      - uses: actions/checkout@v4
+
+      # Build dwm first: the Xvfb test skips rather than fails when it cannot
+      # run, so without a binary it would quietly never run here.
+      - name: Build
+        run: make CC="cc -Werror"
+
+      - name: Tests
+        run: make check

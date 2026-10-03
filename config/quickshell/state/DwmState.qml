@@ -1,0 +1,239 @@
+import QtQuick
+import Quickshell
+import Quickshell.Io
+
+Scope {
+    id: root
+
+    property int currentWorkspace: 0
+    property int focusedMonitorIndex: -1
+    property var monitorWorkspaceRows: []
+    property var workspaceNames: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    property var occupiedWorkspaces: []
+    property var fullscreenMonitorIndexes: []
+    property var runningApps: []
+    property string activeWindowTitle: "Desktop"
+    property string activeWindowClass: "application-x-executable"
+    property string statusText: ""
+    property var statusSegments: []
+
+    function parseState(text) {
+        const lines = text.trim().split("\n");
+
+        for (const line of lines) {
+            const separator = line.indexOf("=");
+
+            if (separator < 0) {
+                continue;
+            }
+
+            const key = line.slice(0, separator);
+            const value = line.slice(separator + 1);
+
+            if (key === "current") {
+                const parsed = parseInt(value, 10);
+
+                root.currentWorkspace = isNaN(parsed) ? 0 : parsed;
+            } else if (key === "monitor_desktops") {
+                const fields = value.length > 0 ? value.split(",") : [];
+                const rows = [];
+
+                for (let index = 0; index + 4 < fields.length; index += 5) {
+                    rows.push({
+                        "x": parseInt(fields[index], 10),
+                        "y": parseInt(fields[index + 1], 10),
+                        "width": parseInt(fields[index + 2], 10),
+                        "height": parseInt(fields[index + 3], 10),
+                        "desktop": parseInt(fields[index + 4], 10)
+                    });
+                }
+                root.monitorWorkspaceRows = rows;
+            } else if (key === "focused_monitor") {
+                const parsed = parseInt(value, 10);
+
+                root.focusedMonitorIndex = isNaN(parsed) ? -1 : parsed;
+            } else if (key === "names") {
+                root.workspaceNames = value.length > 0 ? value.split("|") : [];
+            } else if (key === "occupied") {
+                root.occupiedWorkspaces = value.length > 0 ? value.split("|").map(function(workspace) {
+                    return parseInt(workspace, 10);
+                }) : [];
+            } else if (key === "fullscreen_monitors") {
+                root.fullscreenMonitorIndexes = value.length > 0 ? value.split("|").map(function(monitor) {
+                    return parseInt(monitor, 10);
+                }) : [];
+            } else if (key === "apps") {
+                root.runningApps = value.length > 0 ? value.split("|").map(function(app) {
+                    const separator = app.indexOf(":");
+                    return { "windowId": app.slice(0, separator), "appClass": app.slice(separator + 1) };
+                }) : [];
+            } else if (key === "title") {
+                root.activeWindowTitle = value.length > 0 ? value : "Desktop";
+            } else if (key === "class") {
+                root.activeWindowClass = value.length > 0 ? value : "application-x-executable";
+            } else if (key === "status") {
+                root.statusText = value;
+                root.updateStatusSegments();
+            }
+        }
+    }
+
+    /* dwm status lines have no format; splitting on " | " or a run of spaces
+     * covers every status program in common use. A "dwm-6.5" banner is not
+     * status and is dropped. */
+    function updateStatusSegments() {
+        const text = root.statusText.trim();
+
+        if (text.length === 0 || text.indexOf("dwm-") === 0) {
+            root.statusSegments = [];
+            return;
+        }
+
+        root.statusSegments = text.split(/\s+\|\s+| {2,}/).map(function(segment) {
+            return segment.trim();
+        }).filter(function(segment) {
+            return segment.length > 0;
+        });
+    }
+
+    function workspaceOccupied(index) {
+        return root.occupiedWorkspaces.indexOf(index) !== -1;
+    }
+
+    function screenIndex(screen) {
+        const pixelRatio = screen && screen.devicePixelRatio > 0
+            ? screen.devicePixelRatio : 1;
+        /* dwm reports these geometries in physical pixels, so the origin has to
+         * scale by the same ratio as the size. Without that, every monitor
+         * except the one at x=0 fell through to matching by name. */
+        const pixelX = screen ? Math.round(screen.x * pixelRatio) : 0;
+        const pixelY = screen ? Math.round(screen.y * pixelRatio) : 0;
+        const pixelWidth = screen ? Math.round(screen.width * pixelRatio) : 0;
+        const pixelHeight = screen ? Math.round(screen.height * pixelRatio) : 0;
+
+        for (let index = 0; index < root.monitorWorkspaceRows.length; index++) {
+            const row = root.monitorWorkspaceRows[index];
+            const logicalMatch = screen && row.x === screen.x && row.y === screen.y
+                && row.width === screen.width && row.height === screen.height;
+            const pixelMatch = screen && row.x === pixelX && row.y === pixelY
+                && row.width === pixelWidth && row.height === pixelHeight;
+
+            if (logicalMatch || pixelMatch) {
+                return index;
+            }
+        }
+
+        for (let index = 0; index < Quickshell.screens.length; index++) {
+            if (Quickshell.screens[index] === screen
+                    || (screen && Quickshell.screens[index].name === screen.name)) {
+                return index;
+            }
+        }
+
+        return 0;
+    }
+
+    /* dwm splits the tag list evenly across monitors (getmontagmask in dwm.c),
+     * so each bar only offers the tags its own monitor can actually view. */
+    function workspaceIndexes(screen) {
+        const indexes = [];
+        const workspaceCount = root.workspaceNames.length;
+
+        if (workspaceCount === 0) {
+            return indexes;
+        }
+
+        const screenCount = Math.max(1, root.monitorWorkspaceRows.length > 0
+            ? root.monitorWorkspaceRows.length : Quickshell.screens.length);
+        const logicalIndex = Math.min(root.screenIndex(screen), screenCount - 1);
+        const workspacesPerScreen = Math.max(1, Math.floor(workspaceCount / screenCount));
+        let start = logicalIndex * workspacesPerScreen;
+        let end = logicalIndex === screenCount - 1
+            ? workspaceCount : start + workspacesPerScreen;
+
+        if (start >= workspaceCount) {
+            start = workspaceCount - 1;
+        }
+        end = Math.min(end, workspaceCount);
+
+        for (let index = start; index < end; index++) {
+            indexes.push(index);
+        }
+
+        return indexes;
+    }
+
+    function currentWorkspaceForScreen(screen) {
+        const logicalIndex = root.screenIndex(screen);
+        const indexes = root.workspaceIndexes(screen);
+        const reported = logicalIndex < root.monitorWorkspaceRows.length
+            ? root.monitorWorkspaceRows[logicalIndex].desktop : root.currentWorkspace;
+
+        return indexes.indexOf(reported) !== -1
+            ? reported : (indexes.length > 0 ? indexes[0] : -1);
+    }
+
+    function switchWorkspaceForScreen(screen, index) {
+        if (root.workspaceIndexes(screen).indexOf(index) === -1) {
+            return;
+        }
+
+        root.switchWorkspace(index);
+    }
+
+    function switchWorkspace(index) {
+        switchWorkspaceProcess.command = ["dwm-quickshell-state", "switch", index.toString()];
+        switchWorkspaceProcess.running = true;
+    }
+
+    function focusWindow(windowId) {
+        focusWindowProcess.command = ["dwm-quickshell-state", "focus", windowId];
+        focusWindowProcess.running = true;
+    }
+
+    Process {
+        id: watchProcess
+
+        command: ["dwm-quickshell-state", "watch"]
+        running: true
+
+        /* The watcher dies with its xprop children and Quickshell never restarts
+         * a Process, so without this the bar keeps the tags it last saw.
+         * running, not exited: exited carries a QProcess::ExitStatus that QML
+         * cannot resolve, leaving this handler interpreted instead of compiled. */
+        onRunningChanged: {
+            if (!watchProcess.running) {
+                watchRestart.restart();
+            }
+        }
+
+        stdout: SplitParser {
+            splitMarker: "\n\n"
+            onRead: function(data) {
+                root.parseState(data);
+            }
+        }
+    }
+
+    Timer {
+        id: watchRestart
+
+        interval: 2000
+        repeat: false
+        onTriggered: watchProcess.running = true
+    }
+
+    Process {
+        id: switchWorkspaceProcess
+
+        command: ["dwm-quickshell-state", "switch", root.currentWorkspace.toString()]
+        running: false
+    }
+
+    Process {
+        id: focusWindowProcess
+
+        command: ["dwm-quickshell-state", "focus", "0"]
+        running: false
+    }
+}
