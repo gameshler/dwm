@@ -19,9 +19,9 @@ static const int systraypinningfailfirst =
     1; /* 1: if pinning fails, display systray on the first monitor, False:
           display systray on the last monitor */
 static const int showsystray =
-    0; /* 0 means no systray - disable when using Polybar */
+    0; /* 0 means no systray - the quickshell bar hosts the tray instead */
 static const int showbar =
-    1; /* 1 means show bar - needed for Polybar space calculation */
+    1; /* 1 means show bar - needed for the quickshell bar's space reservation */
 static const int topbar = 1;                /* 0 means bottom bar */
 static const int usealtbar = 1;             /* 1 means use non-dwm status bar */
 #define ICONSIZE 17   /* icon size */
@@ -31,13 +31,16 @@ static const char *fonts[] = {
     "FiraCode Nerd Font "
     "size=14:antialias=true:autohint=true:hintstyle=hintfull",
     "NotoColorEmoji:pixelsize=16:antialias=true:autohint=true"};
-static const char normbordercolor[] = "#3B4252";
-static const char normbgcolor[] =
-    "#434C5E"; /* Lighter background for better icon contrast */
-static const char normfgcolor[] = "#D8DEE9";
-static const char selbordercolor[] = "#434C5E";
-static const char selbgcolor[] = "#434C5E";
-static const char selfgcolor[] = "#ECEFF4";
+/* Kept in sync with config/quickshell/core/Theme.qml. The desktop is black, so
+ * an unfocused window gets the same near-invisible hairline the bar uses and
+ * the focused window is the only thing on screen wearing the accent. That one
+ * border is the entire focus indicator; upstream dwm tints both. */
+static const char normbordercolor[] = "#1A1A20";
+static const char normbgcolor[] = "#000000";
+static const char normfgcolor[] = "#70707C";
+static const char selbordercolor[] = "#88C0D0";
+static const char selbgcolor[] = "#000000";
+static const char selfgcolor[] = "#E8E8EC";
 
 static const char *colors[][3] = {
     /*               fg           bg           border   */
@@ -52,6 +55,7 @@ static const char *const autostart[] = {
     "flameshot", NULL,
     "dunst", NULL,
     "picom", "-b", NULL,
+    "sh", "-c", "$HOME/.local/bin/quickshell-launch.sh", NULL,
     "sh", "-c", "feh --randomize --bg-fill $HOME/Pictures/backgrounds/*", NULL,
     "sh", "-c", "/usr/bin/dex -a", NULL,
     NULL 

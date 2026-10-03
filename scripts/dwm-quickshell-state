@@ -1,0 +1,467 @@
+#!/bin/sh
+# Bridges dwm's EWMH root properties to the Quickshell bar.
+#
+#   watch   stream one record per state change, records separated by a blank line
+#   state   print one record and exit
+#   switch  view a zero-based tag on the monitor that owns it
+#   focus   raise and focus a window id
+set -eu
+
+# Every root property the bar reads. Named once so watch_state spies exactly
+# the set build_record parses. WM_NAME is the root window's name, where a status
+# program writes with xsetroot -name.
+ROOT_PROPERTIES='_DWM_MONITOR_DESKTOPS _DWM_SELECTED_MONITOR
+_DWM_FULLSCREEN_MONITORS _NET_CURRENT_DESKTOP _NET_NUMBER_OF_DESKTOPS
+_NET_DESKTOP_NAMES _NET_ACTIVE_WINDOW _NET_CLIENT_LIST WM_NAME'
+
+root_properties=
+rp_value=
+trimmed=
+
+read_root_properties() {
+	# shellcheck disable=SC2086
+	root_properties=$(xprop -root $ROOT_PROPERTIES 2>/dev/null || true)
+}
+
+trim() {
+	while :; do
+		case $trimmed in
+		' '*) trimmed=${trimmed# } ;;
+		*' ') trimmed=${trimmed% } ;;
+		*) break ;;
+		esac
+	done
+}
+
+# Sets rp_value to one property's value, empty when absent. xprop separates a
+# property from its value with " = ", but with ": " for WINDOW types, so accept
+# both. Absent properties print "not found." or "no such atom ...".
+root_property() {
+	rp_value=
+	while IFS= read -r rp_line; do
+		case $rp_line in
+		"$1"'('* | "$1":*) ;;
+		*) continue ;;
+		esac
+
+		trimmed=${rp_line#*[=:]}
+		trim
+		rp_value=$trimmed
+		break
+	done <<-EOF
+		$root_properties
+	EOF
+
+	case $rp_value in
+	'not found.' | 'no such atom'*) rp_value= ;;
+	esac
+}
+
+# The class is what matches an icon theme entry, but a few clients set only the
+# instance name, and a window with no class is dropped from the bar entirely.
+class_name() {
+	trimmed=$1
+	case $trimmed in
+	*', '*) trimmed=${trimmed##*, } ;;
+	esac
+	trim
+	trimmed=${trimmed#\"}
+	trimmed=${trimmed%\"}
+	cn_value=$trimmed
+}
+
+# Falls back to 1..count for the window between dwm starting and the property
+# appearing, when the bar would otherwise come up with no tag labels.
+desktop_names() {
+	root_property _NET_DESKTOP_NAMES
+	dn_rest=$rp_value
+	dn_names=
+	dn_sep=
+
+	while [ -n "$dn_rest" ]; do
+		case $dn_rest in
+		*,*)
+			trimmed=${dn_rest%%,*}
+			dn_rest=${dn_rest#*,}
+			;;
+		*)
+			trimmed=$dn_rest
+			dn_rest=
+			;;
+		esac
+
+		trim
+		trimmed=${trimmed#\"}
+		trimmed=${trimmed%\"}
+		[ -n "$trimmed" ] || continue
+
+		dn_names="$dn_names$dn_sep$trimmed"
+		dn_sep='|'
+	done
+
+	[ -z "$dn_names" ] || return 0
+
+	dn_i=1
+	while [ "$dn_i" -le "$1" ]; do
+		dn_names="$dn_names$dn_sep$dn_i"
+		dn_sep='|'
+		dn_i=$((dn_i + 1))
+	done
+}
+
+# xdotool knows the focused window before dwm has republished the root property.
+active_window_id() {
+	aw_id=$(xdotool getactivewindow 2>/dev/null || true)
+	[ -z "$aw_id" ] || return 0
+
+	root_property _NET_ACTIVE_WINDOW
+	aw_id=${rp_value##* }
+	case $aw_id in
+	'' | 0x0) aw_id= ;;
+	esac
+}
+
+# Title and class of the focused window in one call. WM_NAME is the fallback
+# clients like xterm rely on, so prefer _NET_WM_NAME only when it carries a
+# value; a missing property prints "not found." with no " = ".
+active_window_info() {
+	aw_title=
+	aw_class=
+	[ -n "$1" ] || return 0
+
+	aw_out=$(xprop -id "$1" _NET_WM_NAME WM_NAME WM_CLASS 2>/dev/null || true)
+	aw_fallback=
+	aw_rawclass=
+
+	while IFS= read -r aw_line; do
+		case $aw_line in
+		'_NET_WM_NAME('*'= '*) aw_title=${aw_line#*= } ;;
+		'WM_NAME('*'= '*) aw_fallback=${aw_line#*= } ;;
+		'WM_CLASS('*'= '*) aw_rawclass=${aw_line#*= } ;;
+		esac
+	done <<-EOF
+		$aw_out
+	EOF
+
+	[ -n "$aw_title" ] || aw_title=$aw_fallback
+	trimmed=$aw_title
+	trim
+	trimmed=${trimmed#\"}
+	trimmed=${trimmed%\"}
+	aw_title=$trimmed
+
+	[ -z "$aw_rawclass" ] || {
+		class_name "$aw_rawclass"
+		aw_class=$cn_value
+	}
+}
+
+# One pass over the client list: occupied tags and the window list both come
+# out of the same per-window read.
+scan_clients() {
+	sc_apps=
+	sc_appsep=
+	sc_seen='|'
+	sc_desktops=' '
+
+	root_property _NET_CLIENT_LIST
+	sc_rest=$rp_value
+
+	while [ -n "$sc_rest" ]; do
+		case $sc_rest in
+		*,*)
+			sc_item=${sc_rest%%,*}
+			sc_rest=${sc_rest#*,}
+			;;
+		*)
+			sc_item=$sc_rest
+			sc_rest=
+			;;
+		esac
+
+		sc_id=${sc_item##* }
+		[ -n "$sc_id" ] || continue
+
+		sc_out=$(xprop -id "$sc_id" _NET_WM_DESKTOP WM_CLASS 2>/dev/null || true)
+		sc_desktop=
+		sc_rawclass=
+		while IFS= read -r sc_line; do
+			case $sc_line in
+			'_NET_WM_DESKTOP('*'= '*) sc_desktop=${sc_line#*= } ;;
+			'WM_CLASS('*'= '*) sc_rawclass=${sc_line#*= } ;;
+			esac
+		done <<-EOF
+			$sc_out
+		EOF
+
+		# 4294967295 is _NET_WM_DESKTOP's "on every desktop", which marks no
+		# single tag as occupied.
+		case $sc_desktop in
+		'' | *[!0-9]* | 4294967295) ;;
+		*)
+			case $sc_desktops in
+			*" $sc_desktop "*) ;;
+			*) sc_desktops="$sc_desktops$sc_desktop " ;;
+			esac
+			;;
+		esac
+
+		[ -n "$sc_rawclass" ] || continue
+		class_name "$sc_rawclass"
+		[ -n "$cn_value" ] || continue
+
+		# One entry per class, dock style.
+		case $sc_seen in
+		*"|$cn_value|"*) continue ;;
+		esac
+		sc_seen="$sc_seen$cn_value|"
+		sc_apps="$sc_apps$sc_appsep$sc_id:$cn_value"
+		sc_appsep='|'
+	done
+}
+
+# Occupied tags in tag order.
+occupied_tags() {
+	ot_value=
+	ot_sep=
+	ot_i=0
+	while [ "$ot_i" -lt "$1" ]; do
+		case $sc_desktops in
+		*" $ot_i "*)
+			ot_value="$ot_value$ot_sep$ot_i"
+			ot_sep='|'
+			;;
+		esac
+		ot_i=$((ot_i + 1))
+	done
+}
+
+fullscreen_monitors() {
+	root_property _DWM_FULLSCREEN_MONITORS
+	fm_value=
+	[ -n "$rp_value" ] || return 0
+
+	fm_value=$(printf '%s' "$rp_value" |
+		tr ',' '\n' |
+		awk '$1 ~ /^[0-9]+$/ { print $1 }' |
+		sort -nu |
+		paste -sd '|' -)
+}
+
+record=
+
+build_record() {
+	read_root_properties
+
+	root_property _NET_CURRENT_DESKTOP
+	current=${rp_value%% *}
+	current=${current:-0}
+
+	root_property _NET_NUMBER_OF_DESKTOPS
+	count=${rp_value%% *}
+	count=${count:-9}
+
+	desktop_names "$count"
+
+	root_property _DWM_MONITOR_DESKTOPS
+	monitor_desktops=
+	md_sep=
+	md_rest=$rp_value
+	while [ -n "$md_rest" ]; do
+		md_head=${md_rest%%,*}
+		case $md_rest in
+		*,*) md_rest=${md_rest#*,} ;;
+		*) md_rest= ;;
+		esac
+		trimmed=$md_head
+		trim
+		monitor_desktops="$monitor_desktops$md_sep$trimmed"
+		md_sep=','
+	done
+	monitor_desktops=${monitor_desktops:-$current}
+
+	root_property _DWM_SELECTED_MONITOR
+	focused_monitor=${rp_value%% *}
+
+	# A newline in a status line would corrupt the record format.
+	root_property WM_NAME
+	trimmed=${rp_value#\"}
+	trimmed=${trimmed%\"}
+	status=$(printf '%s' "$trimmed" | tr '\n' ' ')
+
+	active_window_id
+	active_window_info "$aw_id"
+	scan_clients
+	occupied_tags "$count"
+	fullscreen_monitors
+
+	# Icon theme names are lower case. Window ids are already lower case hex, so
+	# folding them along with the classes changes nothing.
+	[ -z "$sc_apps" ] ||
+		sc_apps=$(printf '%s' "$sc_apps" | tr '[:upper:]' '[:lower:]')
+	[ -z "$aw_class" ] ||
+		aw_class=$(printf '%s' "$aw_class" | tr '[:upper:]' '[:lower:]')
+
+	record="current=$current
+monitor_desktops=$monitor_desktops
+focused_monitor=$focused_monitor
+count=$count
+names=$dn_names
+occupied=$ot_value
+fullscreen_monitors=$fm_value
+apps=$sc_apps
+active_window=$aw_id
+title=${aw_title:-Desktop}
+class=${aw_class:-application-x-executable}
+status=$status"
+}
+
+show_state() {
+	build_record
+	printf '%s\n' "$record"
+}
+
+last_record=
+
+# A title spy restarting, and several properties changing on one user action,
+# both produce events that leave the state identical.
+emit_record() {
+	build_record
+	[ "$record" != "$last_record" ] || return 0
+	last_record=$record
+	printf '%s\n\n' "$record"
+}
+
+stop_title_spy() {
+	if [ -n "$title_pid" ]; then
+		kill "$title_pid" 2>/dev/null || true
+		title_pid=
+	fi
+}
+
+stop_watch() {
+	stop_title_spy
+	if [ -n "$root_pid" ]; then
+		kill "$root_pid" 2>/dev/null || true
+		root_pid=
+	fi
+	rm -rf "$events_dir"
+}
+
+# Re-point the title spy at the focused window. Only does work when the focus
+# actually changed: xprop -spy prints the current value as its first line, so
+# restarting it unconditionally would feed itself an endless event loop.
+start_title_spy() {
+	win=$(xdotool getactivewindow 2>/dev/null || true)
+	if [ "$win" = "$title_win" ]; then
+		return 0
+	fi
+
+	stop_title_spy
+	title_win=$win
+	if [ -n "$win" ]; then
+		xprop -id "$win" -spy _NET_WM_NAME WM_NAME 2>/dev/null >"$events" &
+		title_pid=$!
+	fi
+}
+
+# A root spy alone never sees a window rename itself, so the focused window's
+# name is watched too. Both spies funnel into one fifo so the reader stays in
+# this shell and can track which window it is watching.
+watch_state() {
+	events_dir=$(mktemp -d)
+	events="$events_dir/events"
+	root_pid=
+	title_pid=
+	title_win=
+	mkfifo "$events"
+	trap stop_watch EXIT
+	trap 'exit 0' HUP INT TERM
+
+	# shellcheck disable=SC2086
+	xprop -root -spy $ROOT_PROPERTIES 2>/dev/null >"$events" &
+	root_pid=$!
+
+	# Hold the read end open for the life of the watch: redirecting the loop
+	# itself would close the fifo between iterations and break the spies.
+	exec 3<"$events"
+
+	# xprop -spy prints every property's current value before reporting a single
+	# change. Those lines are not events: drain them, then read state once.
+	# shellcheck disable=SC2086
+	set -- $ROOT_PROPERTIES
+	skip=$#
+	while [ "$skip" -gt 0 ]; do
+		IFS= read -r _event <&3 || break
+		skip=$((skip - 1))
+	done
+
+	emit_record
+	start_title_spy
+
+	while IFS= read -r _event <&3; do
+		emit_record
+		start_title_spy
+	done
+}
+
+switch_workspace() {
+	target=${1:-}
+	case $target in
+	'' | *[!0-9]*)
+		printf 'usage: %s switch <zero-based-workspace>\n' "$0" >&2
+		return 2
+		;;
+	esac
+	command -v wmctrl >/dev/null 2>&1 || {
+		printf 'wmctrl is required for workspace switching\n' >&2
+		return 127
+	}
+	wmctrl -s "$target"
+}
+
+focus_window() {
+	target=${1:-}
+	# Every character has to be checked, not just the first. The shorter
+	# "0x[0-9a-fA-F]* | [0-9]*" is not equivalent: a leading digit makes the
+	# second pattern match the whole of "0xzz; id", letting anything beginning
+	# with a digit through to wmctrl unexamined.
+	case $target in
+	0x*)
+		case ${target#0x} in
+		'' | *[!0-9a-fA-F]*)
+			printf 'usage: %s focus <window-id>\n' "$0" >&2
+			return 2
+			;;
+		esac
+		;;
+	'' | *[!0-9]*)
+		printf 'usage: %s focus <window-id>\n' "$0" >&2
+		return 2
+		;;
+	esac
+	command -v wmctrl >/dev/null 2>&1 || {
+		printf 'wmctrl is required for window focus\n' >&2
+		return 127
+	}
+	wmctrl -ia "$target"
+}
+
+case ${1:-state} in
+state)
+	show_state
+	;;
+watch)
+	watch_state
+	;;
+switch)
+	switch_workspace "${2:-}"
+	;;
+focus)
+	focus_window "${2:-}"
+	;;
+*)
+	printf 'usage: %s [state|watch|switch <zero-based-workspace>|focus <window-id>]\n' "$0" >&2
+	exit 2
+	;;
+esac

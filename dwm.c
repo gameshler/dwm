@@ -114,12 +114,18 @@ enum {
   NetWMWindowType,
   NetWMIcon,
   NetWMWindowTypeDialog,
+  NetWMWindowTypeDock,
   NetClientList,
   NetDesktopNames,
   NetDesktopViewport,
   NetNumberOfDesktops,
   NetCurrentDesktop,
   NetWMDesktop,
+  /* Not EWMH: dwm-specific hints the quickshell bar reads so it can show the
+   * right tag per monitor and duck under a fullscreen client. */
+  DwmMonitorDesktops,
+  DwmSelectedMonitor,
+  DwmFullscreenMonitors,
   NetLast
 }; /* EWMH atoms */
 enum { Manager, Xembed, XembedInfo, XLast }; /* Xembed atoms */
@@ -273,6 +279,7 @@ static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
 static Atom getatomprop(Client *c, Atom prop);
+static Atom getwinatomprop(Window win, Atom prop);
 static pid_t getparentprocess(pid_t p);
 static int getrootptr(int *x, int *y);
 static long getstate(Window w);
@@ -282,6 +289,7 @@ static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
 static void grabkeys(void);
 static void incnmaster(const Arg *arg);
+static int isaltbar(Window win, XWindowAttributes *wa);
 static int isdescprocess(pid_t p, pid_t c);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
@@ -335,7 +343,6 @@ static void sigchld(int unused);
 static void showhide(Client *c);
 static void sigstatusbar(const Arg *arg);
 static void spawn(const Arg *arg);
-static void spawnbar();
 static Monitor *systraytomon(Monitor *m);
 static int swallow(Client *p, Client *c);
 static Client *swallowingclient(Window w);
@@ -354,6 +361,9 @@ static void unmanagealtbar(Window w);
 static void unmanagetray(Window w);
 static void unmapnotify(XEvent *e);
 static void updatecurrentdesktop(void);
+static void updatemonitordesktops(void);
+static void updateselectedmonitor(void);
+static void updatefullscreenmonitors(void);
 static void unswallow(Client *c);
 static void updatebarpos(Monitor *m);
 static void updatebars(void);
@@ -422,7 +432,7 @@ static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
 static xcb_connection_t *xcon;
-static const char *altbarclass = "Polybar";
+static const char *altbarclass = "quickshell";
 static const char *alttrayname = "tray";
 
 unsigned int currentkey = 0;
@@ -458,6 +468,7 @@ struct NumTags {
 /* monitor-specific tag management */
 static int monitorcount = 1;
 static unsigned int getmontagmask(int monnum);
+static int getmonlogicalindex(Monitor *target);
 static int getmonitorforselectedtag(void);
 static void updatemonitorcount(void);
 static void initmonitortags(void);
@@ -868,6 +879,18 @@ void clientmessage(XEvent *e) {
     return;
   }
 
+  /* Pagers send _NET_CURRENT_DESKTOP to the root window and have no client to
+   * look up, so answer before the wintoclient() guard below. */
+  if (cme->message_type == netatom[NetCurrentDesktop]) {
+    long desktop = cme->data.l[0];
+
+    if (desktop >= 0 && desktop < TAGSLENGTH) {
+      Arg arg = {.ui = 1 << desktop};
+      view(&arg);
+    }
+    return;
+  }
+
   if (!c)
     return;
   if (cme->message_type == netatom[NetWMState]) {
@@ -880,8 +903,25 @@ void clientmessage(XEvent *e) {
                             !c->isfullscreen)));
     }
   } else if (cme->message_type == netatom[NetActiveWindow]) {
-    if (c != selmon->sel && !c->isurgent)
-      seturgent(c, 1);
+    /* data.l[0] is EWMH's source indication: 1 is the application asking for
+     * itself, anything else is a pager. Upstream flags every request urgent and
+     * focuses none, which left the bar's app buttons doing nothing. Honour a
+     * pager; keep flagging an application, the focus-stealing case. */
+    if (c != selmon->sel) {
+      if (cme->data.l[0] == 1) {
+        if (!c->isurgent)
+          seturgent(c, 1);
+      } else {
+        /* focus() walks away to another client when this one is on a tag that
+         * is not being viewed, so bring the tag into view first. */
+        if (!ISVISIBLE(c)) {
+          Arg arg = {.ui = c->tags};
+          view(&arg);
+        }
+        focus(c);
+        restack(selmon);
+      }
+    }
   } else if (cme->message_type == netatom[NetWMDesktop]) {
     /* Handle external desktop/workspace change requests */
     long desktop = cme->data.l[0];
@@ -1343,6 +1383,35 @@ Atom getatomprop(Client *c, Atom prop) {
   return atom;
 }
 
+/* Same as getatomprop() but for a bare window, so the altbar can be inspected
+ * before - or without ever - becoming a Client. */
+Atom getwinatomprop(Window win, Atom prop) {
+  int di;
+  unsigned long dl;
+  unsigned char *p = NULL;
+  Atom da, atom = None;
+
+  if (XGetWindowProperty(dpy, win, prop, 0L, sizeof atom, False, XA_ATOM, &da,
+                         &di, &dl, &dl, &p) == Success &&
+      p) {
+    atom = *(Atom *)p;
+    XFree(p);
+  }
+  return atom;
+}
+
+/* Quickshell sets no WM_CLASS on its panel windows, so altbarclass never
+ * matches and the bar would be tiled as an ordinary client. Falls back to the
+ * dock window type, with an aspect check so a tall dock is not taken for a bar. */
+int isaltbar(Window win, XWindowAttributes *wa) {
+  if (wmclasscontains(win, altbarclass, ""))
+    return 1;
+  if (!wa || wa->width <= wa->height)
+    return 0;
+  return getwinatomprop(win, netatom[NetWMWindowType]) ==
+         netatom[NetWMWindowTypeDock];
+}
+
 #if SHOWWINICON
 static uint32_t prealpha(uint32_t p) {
   uint8_t a = p >> 24u;
@@ -1754,6 +1823,9 @@ void manage(Window w, XWindowAttributes *wa) {
   focus(NULL);
 }
 
+/* The bar and its tray are docks, not managed clients, so they are kept out of
+ * _NET_CLIENT_LIST - otherwise the bar reads its own window back as an occupied
+ * tag and as a running application. */
 void managealtbar(Window win, XWindowAttributes *wa) {
   Monitor *m;
   if (!(m = recttomon(wa->x, wa->y, wa->width, wa->height)))
@@ -1768,9 +1840,10 @@ void managealtbar(Window win, XWindowAttributes *wa) {
                EnterWindowMask | FocusChangeMask | PropertyChangeMask |
                    StructureNotifyMask);
   XMoveResizeWindow(dpy, win, wa->x, wa->y, wa->width, wa->height);
+  /* restack() stacks tiled clients below m->barwin, but only for clients that
+   * already exist; raise the bar so it also clears the ones mapped before it. */
+  XRaiseWindow(dpy, win);
   XMapWindow(dpy, win);
-  XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
-                  PropModeAppend, (unsigned char *)&win, 1);
 }
 
 void managetray(Window win, XWindowAttributes *wa) {
@@ -1787,9 +1860,8 @@ void managetray(Window win, XWindowAttributes *wa) {
                EnterWindowMask | FocusChangeMask | PropertyChangeMask |
                    StructureNotifyMask);
   XMoveResizeWindow(dpy, win, wa->x, wa->y, wa->width, wa->height);
+  XRaiseWindow(dpy, win);
   XMapWindow(dpy, win);
-  XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
-                  PropModeAppend, (unsigned char *)&win, 1);
 }
 
 void mappingnotify(XEvent *e) {
@@ -1813,7 +1885,7 @@ void maprequest(XEvent *e) {
 
   if (!XGetWindowAttributes(dpy, ev->window, &wa) || wa.override_redirect)
     return;
-  if (usealtbar && wmclasscontains(ev->window, altbarclass, ""))
+  if (usealtbar && isaltbar(ev->window, &wa))
     managealtbar(ev->window, &wa);
   else if (!wintoclient(ev->window))
     manage(ev->window, &wa);
@@ -2466,7 +2538,7 @@ void scan(void) {
       if (!XGetWindowAttributes(dpy, wins[i], &wa) || wa.override_redirect ||
           XGetTransientForHint(dpy, wins[i], &d1))
         continue;
-      if (usealtbar && wmclasscontains(wins[i], altbarclass, ""))
+      if (usealtbar && isaltbar(wins[i], &wa))
         managealtbar(wins[i], &wa);
       else if (wa.map_state == IsViewable || getstate(wins[i]) == IconicState)
         manage(wins[i], &wa);
@@ -2707,6 +2779,8 @@ void setfullscreen(Client *c, int fullscreen) {
   if (!c->isfullscreen)
     while (XCheckMaskEvent(dpy, EnterWindowMask, &ev))
       ;
+
+  updatefullscreenmonitors();
 }
 
 Layout *last_layout;
@@ -2831,6 +2905,8 @@ void setup(void) {
   netatom[NetWMWindowType] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
   netatom[NetWMWindowTypeDialog] =
       XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+  netatom[NetWMWindowTypeDock] =
+      XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DOCK", False);
   netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
   netatom[NetDesktopViewport] =
       XInternAtom(dpy, "_NET_DESKTOP_VIEWPORT", False);
@@ -2839,6 +2915,12 @@ void setup(void) {
   netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
   netatom[NetDesktopNames] = XInternAtom(dpy, "_NET_DESKTOP_NAMES", False);
   netatom[NetWMDesktop] = XInternAtom(dpy, "_NET_WM_DESKTOP", False);
+  netatom[DwmMonitorDesktops] =
+      XInternAtom(dpy, "_DWM_MONITOR_DESKTOPS", False);
+  netatom[DwmSelectedMonitor] =
+      XInternAtom(dpy, "_DWM_SELECTED_MONITOR", False);
+  netatom[DwmFullscreenMonitors] =
+      XInternAtom(dpy, "_DWM_FULLSCREEN_MONITORS", False);
   xatom[Manager] = XInternAtom(dpy, "MANAGER", False);
   xatom[Xembed] = XInternAtom(dpy, "_XEMBED", False);
   xatom[XembedInfo] = XInternAtom(dpy, "_XEMBED_INFO", False);
@@ -2874,6 +2956,8 @@ void setup(void) {
   setcurrentdesktop();
   setdesktopnames();
   setviewport();
+  /* publish the per-monitor hints the bar reads before it starts */
+  updatecurrentdesktop();
   XDeleteProperty(dpy, root, netatom[NetClientList]);
   /* select events */
   wa.cursor = cursor[CurNormal]->cursor;
@@ -2884,7 +2968,6 @@ void setup(void) {
   XSelectInput(dpy, root, wa.event_mask);
   grabkeys();
   focus(NULL);
-  spawnbar();
 }
 
 void setviewport(void) {
@@ -3018,8 +3101,6 @@ void spawn(const Arg *arg) {
   posix_spawnp(NULL, ((char **)arg->v)[0], NULL, NULL, (char **)arg->v,
                environ);
 }
-
-void spawnbar() { system("$HOME/.config/polybar/launch.sh"); }
 
 void tag(const Arg *arg) {
   unsigned int montags;
@@ -3176,9 +3257,9 @@ static void tile(Monitor *m) {
 
 void togglebar(const Arg *arg) {
   /**
-   * Polybar tray does not raise maprequest event. It must be manually scanned
-   * for. Scanning it too early while the tray is being populated would give
-   * wrong dimensions.
+   * The external bar's tray does not raise a maprequest event. It must be
+   * manually scanned for. Scanning it too early while the tray is being
+   * populated would give wrong dimensions.
    */
   if (usealtbar && !selmon->traywin)
     scantray();
@@ -3365,6 +3446,8 @@ void unmanage(Client *c, int destroyed) {
 
     updateclientlist();
     arrange(m);
+    /* the window that just went away may have been the fullscreen one */
+    updatefullscreenmonitors();
   }
 }
 
@@ -3509,6 +3592,84 @@ void updatecurrentdesktop(void) {
 
   XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL, 32,
                   PropModeReplace, (unsigned char *)data, 1);
+  updatemonitordesktops();
+  updateselectedmonitor();
+  updatefullscreenmonitors();
+}
+
+/* _NET_CURRENT_DESKTOP only carries the selected monitor's tag, but tags are
+ * split across monitors here (see getmontagmask), so publish a row per monitor
+ * - x, y, width, height, tag - for the bar to match against its own screen. */
+void updatemonitordesktops(void) {
+  long *rows;
+  Monitor *m;
+  int count = 0, i, logicalindex;
+  unsigned int tagset;
+
+  updatemonitorcount();
+  for (m = mons; m; m = m->next)
+    count++;
+  if (count == 0)
+    return;
+
+  rows = ecalloc(count * 5, sizeof(long));
+  for (m = mons; m; m = m->next) {
+    logicalindex = getmonlogicalindex(m);
+    if (logicalindex < 0 || logicalindex >= count)
+      continue;
+
+    tagset = m->tagset[m->seltags];
+    for (i = 0; i < TAGSLENGTH && !(tagset & 1 << i); i++)
+      ;
+    rows[logicalindex * 5] = m->mx;
+    rows[logicalindex * 5 + 1] = m->my;
+    rows[logicalindex * 5 + 2] = m->mw;
+    rows[logicalindex * 5 + 3] = m->mh;
+    rows[logicalindex * 5 + 4] = i < TAGSLENGTH ? i : 0;
+  }
+  XChangeProperty(dpy, root, netatom[DwmMonitorDesktops], XA_CARDINAL, 32,
+                  PropModeReplace, (unsigned char *)rows, count * 5);
+  free(rows);
+}
+
+void updateselectedmonitor(void) {
+  long data[] = {0};
+
+  if (!selmon)
+    return;
+
+  data[0] = getmonlogicalindex(selmon);
+  XChangeProperty(dpy, root, netatom[DwmSelectedMonitor], XA_CARDINAL, 32,
+                  PropModeReplace, (unsigned char *)data, 1);
+}
+
+/* managealtbar() raises the bar above the tiled clients, which would leave it
+ * covering a fullscreen one. Listing the monitors that hold a fullscreen client
+ * lets the bar drop itself below the window stack there. */
+void updatefullscreenmonitors(void) {
+  long *monitors;
+  Monitor *m;
+  Client *c;
+  int total = 0, count = 0, logicalindex;
+
+  for (m = mons; m; m = m->next)
+    total++;
+
+  monitors = total ? ecalloc(total, sizeof(long)) : NULL;
+  for (m = mons; m; m = m->next) {
+    for (c = m->clients; c; c = c->next)
+      if (c->isfullscreen && c->fakefullscreen != 1 && ISVISIBLE(c))
+        break;
+    if (!c)
+      continue;
+
+    logicalindex = getmonlogicalindex(m);
+    if (logicalindex >= 0)
+      monitors[count++] = logicalindex;
+  }
+  XChangeProperty(dpy, root, netatom[DwmFullscreenMonitors], XA_CARDINAL, 32,
+                  PropModeReplace, (unsigned char *)monitors, count);
+  free(monitors);
 }
 
 #if SHOWWINICON
@@ -3857,8 +4018,12 @@ void view(const Arg *arg) {
 
   /* Only allow viewing tags that belong to this monitor (now current after
    * potential switch) */
-  if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
+  if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags]) {
+    /* The tag is already viewed, but the walk above may still have moved the
+     * selection to another monitor, and the bar reads that from the root. */
+    updatecurrentdesktop();
     return;
+  }
 
   selmon->seltags ^= 1; /* toggle sel tagset */
   if (arg->ui & TAGMASK) {
