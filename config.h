@@ -165,7 +165,7 @@ static Keychord *keychords[] = {
     &((Keychord){1, {{MODKEY, XK_f}}, setlayout, {.v = &layouts[1]}}),
     &((Keychord){1, {{MODKEY, XK_m}}, fullscreen, {0}}),
     &((Keychord){1, {{MODKEY, XK_space}}, togglefloating, {0}}),
-    &((Keychord){1, {{MODKEY | ShiftMask, XK_m}}, togglefloating, {0}}),
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_m}}, setlayout, {.v = &layouts[2]}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_y}}, togglefakefullscreen, {0}}),
 
     /* Multi-monitor */ 
