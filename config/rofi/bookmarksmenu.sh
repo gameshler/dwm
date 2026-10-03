@@ -21,55 +21,59 @@ EOF
 EOF
 
 emit() {
-  tag="$1"; file="$2"
-  [ -f "$file" ] || return 0
-  grep -vE '^\s*(#|$)' "$file" | while IFS= read -r line; do
-    case "$line" in
-      *"::"*)
-        lhs="${line%%::*}"; rhs="${line#*::}"
-        lhs="$(printf '%s' "$lhs" | sed 's/[[:space:]]*$//')"  
-        rhs="$(printf '%s' "$rhs" | sed 's/^[[:space:]]*//')"  
-        printf '[%s] %s :: %s\n' "$tag" "$lhs" "$rhs"
-        ;;
-      *)
-        url="$line"
-        title="$(echo "$url" | sed -E 's#^https?://(www\.)?([^/]+).*#\2#')"  
-        title="$(echo "$title" | sed -E 's/\..*$//')"  
-        printf '[%s] %s :: %s\n' "$tag" "$title" "$url"
-        ;;
-    esac
-  done
+	tag="$1"
+	file="$2"
+	[ -f "$file" ] || return 0
+	grep -vE '^\s*(#|$)' "$file" | while IFS= read -r line; do
+		case "$line" in
+		*"::"*)
+			lhs="${line%%::*}"
+			rhs="${line#*::}"
+			lhs="$(printf '%s' "$lhs" | sed 's/[[:space:]]*$//')"
+			rhs="$(printf '%s' "$rhs" | sed 's/^[[:space:]]*//')"
+			printf '[%s] %s :: %s\n' "$tag" "$lhs" "$rhs"
+			;;
+		*)
+			url="$line"
+			title="$(echo "$url" | sed -E 's#^https?://(www\.)?([^/]+).*#\2#')"
+			title="$(echo "$title" | sed -E 's/\..*$//')"
+			printf '[%s] %s :: %s\n' "$tag" "$title" "$url"
+			;;
+		esac
+	done
 }
 
 choice="$({
-  emit personal "$PERS_FILE"
-  emit work     "$WORK_FILE"
+	emit personal "$PERS_FILE"
+	emit work "$WORK_FILE"
 } | sort | eval "$ROFI" || true)"
 
 [ -n "$choice" ] || exit 0
 
-tag="${choice%%]*}"; tag="${tag#\[}"
+tag="${choice%%]*}"
+tag="${tag#\[}"
 raw="${choice##* :: }"
 
-raw="$(printf '%s' "$raw" \
-  | sed -e 's/[[:space:]]\+#.*$//' -e 's/[[:space:]]\/\/.*$//' \
-        -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+raw="$(printf '%s' "$raw" |
+	sed -e 's/[[:space:]]\+#.*$//' -e 's/[[:space:]]\/\/.*$//' \
+		-e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
 case "$raw" in
-  http://*|https://*|file://*|about:*|chrome:*) url="$raw" ;;
-  *) url="https://$raw" ;;  
+http://* | https://* | file://* | about:* | chrome:*) url="$raw" ;;
+*) url="https://$raw" ;;
 esac
 
 open_with() {
-  cmd="$1"
-  if [ -n "$cmd" ]; then
-    nohup "$cmd" --new-tab "$url" >/dev/null 2>&1 & exit 0
-  fi
+	cmd="$1"
+	if [ -n "$cmd" ]; then
+		nohup "$cmd" --new-tab "$url" >/dev/null 2>&1 &
+		exit 0
+	fi
 }
 
 case "$tag" in
-  personal) open_with "$FIREFOX" ;;
-  work)     open_with "$BRAVE" ;;
+personal) open_with "$FIREFOX" ;;
+work) open_with "$BRAVE" ;;
 esac
 
-nohup $FALLBACK "$url" >/dev/null 2>&1 &
+nohup "$FALLBACK" "$url" >/dev/null 2>&1 &
