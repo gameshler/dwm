@@ -76,49 +76,68 @@ Singleton {
         return Math.max(minimum, Math.round(value * root.scale));
     }
 
-    readonly property int panelHeight: scaledSize(32)
+    /* Two rules govern every number below, and both of them are about pixels
+     * landing on pixels.
+     *
+     * An icon is centred by its container, so a container and an icon of
+     * different parity put the icon on a half pixel and Qt resamples it into a
+     * blur. trayIconSize was 17 inside a 24 box: an offset of 3.5, every icon
+     * on the bar soft. Every icon size here is even and every box that holds
+     * one is even, so the margin is whole.
+     *
+     * The icon sizes are also the ones the icon theme actually draws. Papirus
+     * ships 16, 22, 24, 32, 48 and 64; asking for 17 made it resample 22 down
+     * by a fraction. 22 is drawn as authored.
+     *
+     * Both hold at scale 1.0, which is the default and the only value tuned.
+     * A fractional scale will reintroduce fractional sizes - that is the
+     * trade the override accepts. */
+    readonly property int panelHeight: scaledSize(40)
     readonly property int panelMargin: 0
     readonly property int panelEdgeMargin: 0
-    readonly property int panelSideMargin: scaledSize(14)
-    readonly property int panelGap: scaledSize(6)
-    readonly property int panelGroupGap: scaledSize(12)
+    readonly property int panelSideMargin: scaledSize(16)
+    readonly property int panelGap: scaledSize(8)
+    readonly property int panelGroupGap: scaledSize(14)
     readonly property int barRadius: 0
 
     readonly property int barEdgeWidth: 1
 
-    readonly property int pillRadius: scaledSize(5)
-    readonly property int pillHeight: scaledSize(24)
-    readonly property int pillHorizontalPadding: scaledSize(8)
+    readonly property int pillRadius: scaledSize(6)
+    readonly property int pillHeight: scaledSize(30)
+    readonly property int pillHorizontalPadding: scaledSize(10)
     readonly property int pillBorderWidth: 1
-    readonly property int smallRadius: scaledSize(5)
+    readonly property int smallRadius: scaledSize(6)
 
-    readonly property int compactSpacing: scaledSize(5)
-    readonly property int compactWidgetSize: scaledSize(24)
-    readonly property int compactWidgetHorizontalPadding: scaledSize(7)
+    readonly property int compactSpacing: scaledSize(6)
+    readonly property int compactWidgetSize: scaledSize(30)
+    readonly property int compactWidgetHorizontalPadding: scaledSize(8)
 
-    readonly property int workspaceButtonSize: scaledSize(24)
-    readonly property int trayItemSize: scaledSize(24)
-    readonly property int trayIconSize: scaledSize(17)
+    readonly property int workspaceButtonSize: scaledSize(30)
+    readonly property int trayItemSize: scaledSize(30)
+    readonly property int trayIconSize: scaledSize(22)
 
     readonly property int underlineHeight: scaledSize(2)
-    readonly property int underlineWidth: scaledSize(12)
-    readonly property int occupiedMarkWidth: scaledSize(3)
+    readonly property int underlineWidth: scaledSize(16)
+    readonly property int occupiedMarkWidth: scaledSize(4)
 
     readonly property int separatorWidth: 1
-    readonly property int separatorHeight: scaledSize(12)
+    readonly property int separatorHeight: scaledSize(16)
 
     readonly property real titleWidthFraction: 0.18
-    readonly property int titleMinWidth: scaledSize(120)
+    readonly property int titleMinWidth: scaledSize(150)
 
     readonly property real dockWidthFraction: 0.20
-    readonly property int dockMinimumWidth: scaledSize(96)
+    readonly property int dockMinimumWidth: scaledSize(120)
 
-    readonly property int panelFontSize: scaledFontSize(13, 10)
-    readonly property int smallFontSize: scaledFontSize(12, 10)
-    readonly property int tinyFontSize: scaledFontSize(10, 8)
-    readonly property int panelIconFontSize: scaledFontSize(14, 8)
+    readonly property int panelFontSize: scaledFontSize(15, 10)
+    readonly property int smallFontSize: scaledFontSize(14, 10)
+    readonly property int tinyFontSize: scaledFontSize(11, 8)
+    readonly property int panelIconFontSize: scaledFontSize(17, 8)
 
-    readonly property real clockLetterSpacing: 0.8
+    /* Whole pixels. NativeRendering places glyphs on the pixel grid, so a
+     * fractional tracking value put every character after the first on a
+     * fraction and softened the one label that is always on screen. */
+    readonly property real clockLetterSpacing: 1.0
 
     readonly property int animationNormal: 180
 }

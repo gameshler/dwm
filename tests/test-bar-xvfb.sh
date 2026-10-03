@@ -146,16 +146,17 @@ render() {
 		"$width" "$height" "$measured"
 }
 
-# panelHeight is 32 logical pixels, so at a ratio of 1 the bar is 32 physical.
-render 1024 600 32
-render 1366 768 32
-render 1920 1080 32
-render 3440 1440 32
+# panelHeight is 40 logical pixels, so at a ratio of 1 the bar is 40 physical.
+render 1024 600 40
+render 1366 768 40
+render 1920 1080 40
+render 2560 1440 40
+render 3440 1440 40
 
 # QT_FONT_DPI is the only knob measured to move Qt's device pixel ratio on
 # Xorg. 144 gives the fractional 1.5 that core/UiText.qml's renderer switch
 # exists for.
-render 1920 1080 48 QT_FONT_DPI=144
-render 1920 1080 64 QT_FONT_DPI=192
+render 1920 1080 60 QT_FONT_DPI=144
+render 1920 1080 80 QT_FONT_DPI=192
 
 printf 'Bar renders under Xvfb: PASS\n'

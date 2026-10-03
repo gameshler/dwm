@@ -12,7 +12,9 @@ PopupWindow {
     property real anchorY: 0
     property bool rightAligned: false
 
-    implicitWidth: tooltipLabel.implicitWidth + Theme.pillHorizontalPadding * 2
+    /* Ceiled: a text advance width is fractional, and a popup on a half pixel
+     * draws a soft border and a soft radius. */
+    implicitWidth: Math.ceil(tooltipLabel.implicitWidth) + Theme.pillHorizontalPadding * 2
     implicitHeight: Theme.pillHeight
     color: Theme.transparent
     mask: Region {}

@@ -35,8 +35,14 @@ Rectangle {
 
         layer.enabled: true
         /* Qt sizes a layer texture in logical pixels, so without multiplying by
-         * the device pixel ratio a HiDPI screen renders the icon at 17px and
-         * stretches it. Ceil, because a texture is a whole number of pixels. */
+         * the device pixel ratio a HiDPI screen renders the icon at its logical
+         * size and stretches it. Ceil, because a texture is a whole number of
+         * pixels.
+         *
+         * Compositing through a layer is also what makes the icon's own
+         * placement unforgiving: a half-pixel offset is resampled rather than
+         * snapped. Theme keeps trayIconSize and pillHeight both even so the
+         * centring margin stays whole; see the note in Theme.qml. */
         layer.smooth: true
         layer.textureSize: Qt.size(
             Math.ceil(appIcon.width * Screen.devicePixelRatio),
