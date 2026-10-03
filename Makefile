@@ -27,6 +27,34 @@ dwm: ${OBJ}
 clean:
 	rm -f dwm ${OBJ} *.orig *.rej
 
+# check-bar-xvfb exits 77 - treated as a skip - when Quickshell or Xvfb is
+# absent.
+check: check-design-system check-tray check-layout check-state-protocol \
+	check-launcher check-state check-bar-xvfb
+
+check-design-system:
+	tests/test-quickshell-design-system.sh
+
+check-tray:
+	tests/test-quickshell-tray.sh
+
+check-layout:
+	tests/test-quickshell-layout.sh
+
+check-state-protocol:
+	tests/test-state-protocol.sh
+
+check-launcher:
+	tests/test-quickshell-launcher.sh
+
+check-state:
+	tests/test-dwm-quickshell-state.sh
+
+check-bar-xvfb: dwm
+	@status=0; tests/test-bar-xvfb.sh || status=$$?; \
+		if [ "$$status" -eq 77 ]; then exit 0; fi; \
+		exit "$$status"
+
 install: all
 	@echo "==> Installing DWM..."
 	mkdir -p ${DESTDIR}${PREFIX}/bin
@@ -72,4 +100,6 @@ release: dwm
 	cp -rf config scripts release/
 	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop .xinitrc .xprofile config scripts
 
-.PHONY: all clean install uninstall release
+.PHONY: all clean install uninstall release check check-design-system \
+	check-tray check-layout check-state-protocol check-launcher check-state \
+	check-bar-xvfb
