@@ -27,6 +27,13 @@ dwm: ${OBJ}
 clean:
 	rm -f dwm ${OBJ} *.orig *.rej
 
+lint:
+	@command -v shellcheck >/dev/null || { echo "install shellcheck"; exit 1; }
+	@command -v shfmt >/dev/null || { echo "install shfmt"; exit 1; }
+	files=$$(shfmt -f config debug scripts tests tools install.sh); \
+		shellcheck -x $$files && shfmt -d $$files
+	tools/qml-lint.sh
+
 # check-bar-xvfb exits 77 - treated as a skip - when Quickshell or Xvfb is
 # absent.
 check: check-design-system check-tray check-layout check-state-protocol \
@@ -100,6 +107,6 @@ release: dwm
 	cp -rf config scripts release/
 	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop .xinitrc .xprofile config scripts
 
-.PHONY: all clean install uninstall release check check-design-system \
+.PHONY: all clean lint install uninstall release check check-design-system \
 	check-tray check-layout check-state-protocol check-launcher check-state \
 	check-bar-xvfb
