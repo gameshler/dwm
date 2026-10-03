@@ -65,6 +65,35 @@ Scope {
         running: false
     }
 
+    /* Local package changes, noticed as they happen. pacman appends to this on
+     * every transaction, so an install, a removal or a -Syu all land here and
+     * the count stops sitting stale until the next half-hourly sweep.
+     *
+     * preload is off and neither text() nor data() is ever called, so the file
+     * is watched without being read - this log reaches tens of megabytes on an
+     * old install and none of its content is wanted, only the fact that it
+     * moved. A missing file simply never fires, which is the right answer off
+     * Arch. */
+    FileView {
+        path: "/var/log/pacman.log"
+        preload: false
+        watchChanges: true
+        onFileChanged: settleTimer.restart()
+    }
+
+    /* A transaction writes many lines over however long it takes, and
+     * checkupdates syncs a database over the network, so it is worth running
+     * once after the writing stops rather than on every line. */
+    Timer {
+        id: settleTimer
+
+        interval: 1500
+        onTriggered: root.refresh()
+    }
+
+    /* Still needed with the watcher in place: updates appear when a remote
+     * repository gains a package, which happens with nothing at all going on
+     * locally. */
     Timer {
         interval: 1800000
         running: true
