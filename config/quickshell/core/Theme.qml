@@ -22,9 +22,26 @@ Singleton {
     readonly property string border: "#1A1A20"
     readonly property string borderStrong: "#2E2E3A"
 
-    readonly property string text: "#70707C"
+    /* Contrast against the #000000 bar, measured as a WCAG ratio:
+     *
+     *   text        #8A8A96   6.2:1   was #70707C at 4.3:1, under the 4.5:1
+     *                                 floor for body text - and this is the
+     *                                 window title, the status line and every
+     *                                 inactive icon, so it is the colour that
+     *                                 is read most and strained for
+     *   textStrong  #E8E8EC  17.2:1   unchanged
+     *   textMuted   #4E4E5A   2.6:1   was #3E3E48 at 2.0:1. Decorative: an
+     *                                 empty tag, the +n overflow count. Below
+     *                                 the floor on purpose, since reading it
+     *                                 is never the point, but legible enough
+     *                                 to be seen at all
+     *   accent      #88C0D0  10.5:1   unchanged
+     *
+     * The hierarchy is unchanged - strong, normal, muted still separate
+     * cleanly. Only the bottom two were dark enough to hurt. */
+    readonly property string text: "#8A8A96"
     readonly property string textStrong: "#E8E8EC"
-    readonly property string textMuted: "#3E3E48"
+    readonly property string textMuted: "#4E4E5A"
 
     readonly property string accent: "#88C0D0"
     readonly property string accentSecondary: "#5E81AC"
