@@ -204,7 +204,8 @@ PanelWindow {
                     id: updatePill
 
                     visible: root.updateModel.available && root.updateModel.count > 0
-                    Layout.preferredWidth: updateRow.implicitWidth + Theme.compactWidgetHorizontalPadding * 2
+                    Layout.preferredWidth: Math.ceil(updateRow.implicitWidth)
+                        + Theme.compactWidgetHorizontalPadding * 2
                     Layout.preferredHeight: Theme.compactWidgetSize
                     Layout.alignment: Qt.AlignVCenter
                     hovered: updateMouse.containsMouse
@@ -263,7 +264,8 @@ PanelWindow {
                     id: batteryPill
 
                     visible: root.batteryModel.available
-                    Layout.preferredWidth: batteryRow.implicitWidth + Theme.compactWidgetHorizontalPadding * 2
+                    Layout.preferredWidth: Math.ceil(batteryRow.implicitWidth)
+                        + Theme.compactWidgetHorizontalPadding * 2
                     Layout.preferredHeight: Theme.compactWidgetSize
                     Layout.alignment: Qt.AlignVCenter
                     hovered: batteryMouse.containsMouse
@@ -343,7 +345,8 @@ PanelWindow {
 
                 PanelPill {
                     visible: root.audioModel.available
-                    Layout.preferredWidth: volumeRow.implicitWidth + Theme.compactWidgetHorizontalPadding * 2
+                    Layout.preferredWidth: Math.ceil(volumeRow.implicitWidth)
+                        + Theme.compactWidgetHorizontalPadding * 2
                     Layout.preferredHeight: Theme.compactWidgetSize
                     Layout.alignment: Qt.AlignVCenter
                     hovered: volumeMouse.containsMouse

@@ -46,8 +46,11 @@ clock and the optional pills, fed by a single state script.
 - Automated: `make CC="cc -Werror"` clean, `make lint` clean, all three CI jobs
   green. DONE.
 - Rendered evidence: bar screenshotted under Xvfb in a container. DONE.
-- Manual on hardware: NOT DONE. Blocks this phase.
-- Clean-install run of `install.sh`: NOT DONE. Blocks this phase.
+- Manual on hardware: DONE in part. The bar renders every module on the target
+  hardware, which is this phase's first exit criterion. It also surfaced seven
+  defects, carried into Phase 4.
+- Clean-install run of `install.sh`: DONE. It produced a working desktop on an
+  Arch machine, with the caveats now fixed in Phase 4.
 
 ## Phase 2: Make the bar actually work
 
@@ -97,7 +100,9 @@ nothing when the desktop is idle.
   down to one, four to five records per action down to one, zero idle records
   in both. DONE.
 - Injection refused on `focus` and `switch`, exit 2. DONE.
-- Manual on hardware: NOT DONE. Blocks this phase.
+- Manual on hardware: NOT DONE for the interaction criteria - tag clicks,
+  cross-tag focus, watcher respawn and the idle budget were not exercised by
+  the first install. Blocks this phase.
 
 ## Phase 3: Release readiness
 
@@ -142,3 +147,51 @@ archsetup dwm tab installs against it correctly.
 - Rollback: revert the merge commit. Nothing in this repo holds state, writes a
   database, or migrates anything, so a revert plus a re-run of `install.sh`
   restores the previous desktop.
+
+## Phase 4: The defects the first install found
+
+### Outcome
+
+The desktop the install produces is the one it was meant to produce: dark
+throughout, readable on the author's two monitors, sharp, current, and with
+every control doing what it says.
+
+### Included work
+
+- Name a GTK 3 theme that resolves, so GTK 3 applications come up dark.
+- Enlarge the bar and put every dimension on whole pixels, choosing icon sizes
+  the icon theme actually draws.
+- Lift body text to meet the WCAG AA contrast floor against the black bar.
+- Refresh the update count from a watch on pacman's log rather than only from
+  a half-hourly timer.
+- Repair the power menu: resolve the session rather than assuming one, offer
+  only the sleep states the kernel accepts, and report every failure.
+- Repair `display-setup.sh`: read the refresh rate from the output's own mode
+  block, and take the left-to-right arrangement from a layout file.
+
+### Dependencies and risks
+
+- Nothing here changes `dwm.c` or the state protocol, so the parts carrying
+  real risk are untouched. The blast radius is the bar's appearance, two
+  scripts, and one settings file.
+- Two of the six are repairs to code that demonstrably never worked, which
+  means there is no behaviour to regress.
+- `Theme.qml` sets sizes everywhere at once; a mistake there is visible
+  immediately and everywhere, which is the good case.
+
+### Exit criteria
+
+- Each of the seven reported defects is confirmed fixed on the machine that
+  reported it.
+- The interaction criteria Phases 1 and 2 are still waiting on are exercised
+  on that machine.
+
+### Validation
+
+- The full local gate: `make CC="cc -Werror"`, `make lint`, `make check`.
+- Both shell defects reproduced against the previous script before the fix,
+  and pinned by a test afterwards.
+- The GTK 3 defect measured as a rendered colour rather than argued about.
+- Rendered evidence: the bar screenshotted before and after at 2560x1440.
+- Rollback: revert the merge commit and re-run `install.sh`. Nothing here
+  holds state.

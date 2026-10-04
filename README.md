@@ -164,10 +164,18 @@ Screenshots:
 | `Super + Shift + p` | Select a region, saved to disk |
 | `Super + Ctrl + p` | Select a region, copied to the clipboard |
 
-> The two that save to disk write to `/media/drive/Screenshots/`, which is
-> specific to the author's machine. If that path does not exist on yours,
-> change it in the two `flameshot` lines in `config.h` and rebuild, or create
-> the directory.
+> The two that save to disk write to `~/Pictures/Screenshots`, creating it on
+> first use. Set `DWM_SCREENSHOT_DIR` in `~/.xprofile` to send them somewhere
+> else; no rebuild is needed.
+>
+> ```sh
+> export DWM_SCREENSHOT_DIR=/media/drive/Screenshots
+> ```
+>
+> `flameshot` fails silently when the directory it is given does not exist, so
+> an external drive that is not mounted at login loses the shot rather than
+> reporting an error. Keep the fallback in mind before pointing this at
+> removable storage.
 
 Session:
 
@@ -251,6 +259,39 @@ Two things worth knowing:
 `Theme.scale` in `config/quickshell/core/Theme.qml` is a separate manual
 multiplier, for making the bar deliberately larger than the rest of the desktop.
 Leave it at `1.0` unless that is what you want.
+
+The bar is 40 logical pixels tall at `1.0`, and every icon size is both even and
+a size the icon theme actually draws, so icons land on whole pixels instead of
+being resampled. A fractional `Theme.scale` gives that up — `1.25` turns a 22px
+icon into 27.5 — so prefer `Xft.dpi` above, which scales the whole desktop
+together, and reach for `Theme.scale` only to size the bar against everything
+else.
+
+### Monitor arrangement
+
+`scripts/display-setup.sh` runs at login, enables every connected output at its
+native mode and highest refresh rate, and lays them out left to right. It cannot
+know where your monitors physically sit, so by default it orders them the way
+`xrandr` lists them, which is by connector name. If that puts a monitor on the
+wrong side, say where they actually are in `~/.config/dwm/monitors.conf` — one
+output per line, left to right, the first line primary:
+
+```
+# my desk, left to right
+HDMI-1
+DP-2
+```
+
+Get the names from:
+
+```bash
+xrandr --query | grep " connected"
+```
+
+Blank lines and `#` comments are ignored. Outputs that are not connected are
+skipped, and any connected output the file does not mention is added on the
+right, so plugging in a new monitor still lights it up. With no file the
+connector-name order is used.
 
 ### Small screens
 
@@ -441,6 +482,23 @@ that the file exists.
 **An indicator is missing.** That is deliberate: each one hides itself when its
 hardware or its tool is absent. See the optional packages in
 [Requirements](#requirements).
+
+**GTK applications come up light.** Check that
+`~/.config/gtk-3.0/settings.ini` names `Adwaita` and not `Adwaita-dark`. GTK 3
+has no theme by that name — it carries Adwaita as a compiled-in resource with
+separate light and dark stylesheets, and `gtk-application-prefer-dark-theme` is
+what picks the dark one. `Adwaita-dark` resolves to nothing, GTK falls back to
+light, and `gtk-theme-name` reads back exactly as written, so the setting looks
+applied. GTK 4 does resolve the name, which is why `config/gtk-4.0/settings.ini`
+differs on purpose.
+
+**A monitor is on the wrong side.** See [Monitor
+arrangement](#monitor-arrangement).
+
+**A power menu entry does nothing.** It should now say why in a rofi dialog.
+Suspend and hibernate are only offered when `/sys/power/state` names them;
+hibernate additionally needs swap at least the size of RAM and a `resume=`
+kernel parameter.
 
 ### Bookmarks menu
 

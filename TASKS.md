@@ -1,72 +1,97 @@
 # Project tasks
 
-Current phase: Phase 3, release readiness. See `ROADMAP.md`.
+Current phase: Phase 4, defects found on hardware. See `ROADMAP.md`.
 
 ## Current phase
 
-- [ ] Run the manual hardware validation Phases 1 and 2 are both waiting on.
-  - Scope: install this branch on the Arch machine and exercise the bar.
-  - Acceptance criteria: every module renders; clicking a tag switches tags;
-    clicking an app icon focuses that window on the current tag and across
-    tags; `kill -9` on `dwm-quickshell-state` results in the bar restarting it;
-    an untouched desktop emits zero records and shows no measurable CPU.
-  - Added by the black redesign, all still unproven on hardware: the bar reads
-    as black against the real wallpaper rather than as a grey stripe; the app
-    dock still resolves real icons now that the icon theme is set through the
-    portal; GTK applications come up dark; Qt applications come up dark; the
-    update pill appears only when updates are pending and its click opens a
-    terminal; a machine with no battery and no bluetooth draws no doubled
-    separator.
-  - Added by the design fixes: the dock icons draw greyscale and return to full
-    colour under the pointer, on the real GPU rather than llvmpipe; the window
-    title and the tooltips render in Inter, not in FiraCode.
-  - Added by the resolution work, and the one leg no container could cover:
-    put `Xft.dpi: 192` in `~/.Xresources`, log in, and check the bar comes up
-    at twice the size along with dwm's own font and rofi. `xrdb -query` reads
-    back nothing under Xvfb, in an emulated amd64 Arch container and in a
-    native arm64 Debian one alike, so the `Xft.dpi` to `QT_FONT_DPI`
-    translation in `quickshell-launch.sh` is proven only against a stubbed
-    `xrdb -query`. The fault was isolated to `xrdb` itself rather than to the
-    X server: `xrdb -merge` and `xprop -set` both store nothing because they
-    exit without `XSetCloseDownMode(RetainPermanent)`, and a setter that does
-    call it leaves a RESOURCE_MANAGER that `xprop` reads back correctly and
-    `xrdb -query` still does not see. Also unproven on hardware: that a real
-    HiDPI panel reports the device pixel ratio the bar then scales by.
+- [ ] Re-verify the nine hardware defects on the machine they were found on.
+  - Scope: the fixes on `gameshler/fix/post-install-defects`, installed and
+    exercised on the same two-monitor Arch machine that reported them.
+  - Acceptance criteria, one per defect: GTK 3 applications come up dark;
+    the bar reads comfortably on both the 1080p and the 1440p panel; icons and
+    the clock are sharp; the update count changes within seconds of a `pacman`
+    transaction rather than within half an hour; every power menu entry either
+    acts or says why; a monitor named first in `~/.config/dwm/monitors.conf`
+    is the one on the left; hovering a tag, a dock icon or a pill shows a
+    fill, and the bar has a visible bottom edge over a black wallpaper;
+    `Super + p` and `Super + Shift + p` leave a file in
+    `~/Pictures/Screenshots` with no drive mounted.
+  - Automated validation: passed already - `make CC="cc -Werror"` zero
+    warnings, `make lint` zero findings, `make check` nine of nine including
+    renders at 40 physical pixels across five widths and 60/80 at ratios 1.5
+    and 2. Both shell defects were reproduced against the previous scripts
+    before being fixed, and the GTK 3 defect was measured as a colour.
+  - Manual validation: is the task. None of it can be proven here - a
+    container has no GPU, no logind session, no monitors and no pacman
+    transactions.
+  - Dependencies or blockers: none.
+
+- [ ] Finish the parts of the Phase 1 and 2 gate the first install did not
+      cover.
+  - Scope: the acceptance criteria below that the hardware run never
+    exercised. The install itself, the bar rendering and every module being
+    present are confirmed.
+  - Acceptance criteria, still unproven on hardware: clicking a tag switches
+    tags; clicking an app icon focuses that window on the current tag and
+    across tags; `kill -9` on `dwm-quickshell-state` has the bar restart it;
+    an untouched desktop shows no measurable CPU; the dock icons draw
+    greyscale and return to colour under the pointer on a real GPU; the title
+    and tooltips render in Inter; the update pill's click opens a terminal;
+    `Xft.dpi: 192` scales the bar along with dwm's font and rofi.
   - Automated validation: none applies. This is the gate automation cannot
     cover.
   - Manual validation: is the task.
-  - Dependencies or blockers: none. Everything needed is on the branch.
+  - Dependencies or blockers: none.
 
-- [ ] Split the working tree into atomic commits.
-  - Scope: six logical changes, currently one tree. The bar swap including the
-    polybar deletions; the `dwm.c` focus fix; `install.sh` and its README
-    section; the `config.mk` `-Wextra` widening; the CI workflow and
-    `tools/qml-lint.sh`; the shell script formatting and shellcheck fixes.
-  - Acceptance criteria: each commit builds and lints on its own; no commit
-    bundles unrelated changes; Conventional Commits format.
-  - Automated validation: `make CC="cc -Werror"` and `make lint` at each
-    commit.
-  - Manual validation: read the diff of each commit in isolation.
-  - Dependencies or blockers: no commit authorization has been given for this
-    repo. Blocked until it is.
+## Completed in Phase 3
 
-- [ ] Open the pull request and merge before archsetup PR #21.
-  - Scope: one pull request from `gameshler/feat/quickshell-bar-swap`.
-  - Acceptance criteria: CI green; merged; archsetup PR #21 merged after, not
-    before.
-  - Automated validation: all four CI jobs.
-  - Manual validation: hardware validation above must be done first.
-  - Dependencies or blockers: every task above. Ordering against archsetup
-    matters because its dwm tab clones this repo's `main` and its ghostty and
-    rofi steps `curl` files from it; merging archsetup first installs
-    Quickshell packages onto a polybar config.
+- [x] Run the manual hardware validation Phases 1 and 2 are both waiting on.
+  - Run on the author's two-monitor Arch machine. The install completed, the
+    bar came up, and every module rendered - which is the core of what Phases
+    1 and 2 could not prove in a container.
+  - It found seven defects, four of which no container could have caught and
+    three of which had never worked at all:
+    - GTK 3 applications came up light. `gtk-theme-name=Adwaita-dark` names a
+      theme GTK 3 does not have, so it fell back to light Adwaita while
+      reading the name back unchanged. Measured as `theme_bg_color` #F6F5F4
+      against #353535.
+    - The bar was too small to read comfortably at 32 logical pixels across a
+      1080p and a 1440p panel.
+    - Icons were soft. `trayIconSize` 17 centred in a 24 box is an offset of
+      3.5 physical pixels, and 17 is not a size any icon theme draws.
+    - The clock was soft, from `letterSpacing: 0.8` under a renderer that
+      hints glyphs onto the pixel grid.
+    - The update count stood still for up to thirty minutes after a system
+      update, which is the one moment it is certainly wrong.
+    - The power menu's logout never worked. It passed `$XDG_SESSION_ID` to
+      `loginctl` unconditionally, and a display manager does not reliably
+      export it.
+    - `display-setup.sh` had never configured anything. It read the refresh
+      rate by grepping the whole `xrandr` query for the resolution, which also
+      matches the output's `connected` header, so a 2560x1440 panel yielded
+      "597" - its width in millimetres - and `xrandr` refused the command. It
+      also arranged monitors by connector name, which is unrelated to where
+      they sit.
+  - Body text also measured 4.30:1 against the black bar, under the 4.50:1
+    WCAG AA floor, which is consistent with the eye strain reported.
+  - The criteria it did not exercise are carried forward as the second open
+    task above.
+
+- [x] Split the working tree into atomic commits. Eleven commits, merged in
+      pull request #2.
+- [x] Open the pull request and merge before the archsetup pull request.
+      dwm #2 merged, then archsetup #22.
 
 ## Built, pending manual validation
 
-These are implemented and their automated gates pass. They are not complete,
-because the hardware gate in `ROADMAP.md` has not run. Residual risk on all of
-them is the same: everything was proven under Xvfb in a container, which is not
-the machine this has to work on.
+These are implemented, their automated gates pass, and the hardware run has
+now covered part of what they were waiting on: the install, the bar coming up
+and every module rendering are confirmed on the machine. What that run did not
+exercise is listed as the second open task above, and the defects it did find
+are listed with it.
+
+This section is kept as the record of what each piece was proven to do before
+it reached hardware, and by what means.
 
 - Bar swap. Polybar deleted, `config/quickshell/` added with 19 QML files,
   `dwm-quickshell-state` and `quickshell-launch.sh` added, `autostart[]`
@@ -221,5 +246,10 @@ the machine this has to work on.
   made `git pull` conflict on a machine with local edits. `git check-ignore
   --no-index config.h` and `git ls-files config.h` now agree.
 
-No implementation task has cleared both its automated and its manual
-validation.
+- Decided: the seven Phase 4 fixes ship on one branch rather than seven. They
+  are separate logical changes and are separate commits, but they came from a
+  single report about a single install, and splitting them across branches
+  would order them artificially while two of them touch the same file.
+
+The bar swap has cleared its automated gate and the part of its manual gate
+that a first install exercises. No task has cleared the whole of both.

@@ -15,16 +15,55 @@ Singleton {
     readonly property string bg: "#000000"
     readonly property string barBackground: "#000000"
 
-    readonly property string surface: "#101014"
-    readonly property string surfaceHover: "#17171D"
-    readonly property string surfaceActive: "#1E1E26"
+    /* The header above says fills and borders exist only for hover and
+     * selection. They were too dark to do that job. Against the #000000 bar:
+     *
+     *   surfaceHover    #26262F   1.40:1   was #17171D at 1.18:1 - hovering a
+     *                                      tag, a dock icon or a pill lit a
+     *                                      rectangle nobody could see, so the
+     *                                      bar read as having no hover at all
+     *   surfaceActive   #33333F   1.69:1   was #1E1E26 at 1.27:1. Reachable
+     *                                      only through PanelPill.active,
+     *                                      which nothing sets today, so this
+     *                                      moves to stay one step above hover
+     *   border          #26262F   1.40:1   was #1A1A20 at 1.21:1. This draws
+     *                                      the separators and the bar's bottom
+     *                                      edge, both of which sat on a black
+     *                                      wallpaper and vanished into it
+     *   borderStrong    #3A3A48   1.88:1   was #2E2E3A at 1.57:1. The tooltip
+     *                                      outline, over application windows
+     *                                      rather than over the bar
+     *
+     * Still dark enough that nothing draws a box at rest - every one of these
+     * appears on hover or as a hairline. surface has no reference at all; it
+     * moves with the ramp so it stays coherent if something reaches for it. */
+    readonly property string surface: "#15151B"
+    readonly property string surfaceHover: "#26262F"
+    readonly property string surfaceActive: "#33333F"
 
-    readonly property string border: "#1A1A20"
-    readonly property string borderStrong: "#2E2E3A"
+    readonly property string border: "#26262F"
+    readonly property string borderStrong: "#3A3A48"
 
-    readonly property string text: "#70707C"
+    /* Contrast against the #000000 bar, measured as a WCAG ratio:
+     *
+     *   text        #8A8A96   6.2:1   was #70707C at 4.3:1, under the 4.5:1
+     *                                 floor for body text - and this is the
+     *                                 window title, the status line and every
+     *                                 inactive icon, so it is the colour that
+     *                                 is read most and strained for
+     *   textStrong  #E8E8EC  17.2:1   unchanged
+     *   textMuted   #4E4E5A   2.6:1   was #3E3E48 at 2.0:1. Decorative: an
+     *                                 empty tag, the +n overflow count. Below
+     *                                 the floor on purpose, since reading it
+     *                                 is never the point, but legible enough
+     *                                 to be seen at all
+     *   accent      #88C0D0  10.5:1   unchanged
+     *
+     * The hierarchy is unchanged - strong, normal, muted still separate
+     * cleanly. Only the bottom two were dark enough to hurt. */
+    readonly property string text: "#8A8A96"
     readonly property string textStrong: "#E8E8EC"
-    readonly property string textMuted: "#3E3E48"
+    readonly property string textMuted: "#4E4E5A"
 
     readonly property string accent: "#88C0D0"
     readonly property string accentSecondary: "#5E81AC"
@@ -76,49 +115,68 @@ Singleton {
         return Math.max(minimum, Math.round(value * root.scale));
     }
 
-    readonly property int panelHeight: scaledSize(32)
+    /* Two rules govern every number below, and both of them are about pixels
+     * landing on pixels.
+     *
+     * An icon is centred by its container, so a container and an icon of
+     * different parity put the icon on a half pixel and Qt resamples it into a
+     * blur. trayIconSize was 17 inside a 24 box: an offset of 3.5, every icon
+     * on the bar soft. Every icon size here is even and every box that holds
+     * one is even, so the margin is whole.
+     *
+     * The icon sizes are also the ones the icon theme actually draws. Papirus
+     * ships 16, 22, 24, 32, 48 and 64; asking for 17 made it resample 22 down
+     * by a fraction. 22 is drawn as authored.
+     *
+     * Both hold at scale 1.0, which is the default and the only value tuned.
+     * A fractional scale will reintroduce fractional sizes - that is the
+     * trade the override accepts. */
+    readonly property int panelHeight: scaledSize(40)
     readonly property int panelMargin: 0
     readonly property int panelEdgeMargin: 0
-    readonly property int panelSideMargin: scaledSize(14)
-    readonly property int panelGap: scaledSize(6)
-    readonly property int panelGroupGap: scaledSize(12)
+    readonly property int panelSideMargin: scaledSize(16)
+    readonly property int panelGap: scaledSize(8)
+    readonly property int panelGroupGap: scaledSize(14)
     readonly property int barRadius: 0
 
     readonly property int barEdgeWidth: 1
 
-    readonly property int pillRadius: scaledSize(5)
-    readonly property int pillHeight: scaledSize(24)
-    readonly property int pillHorizontalPadding: scaledSize(8)
+    readonly property int pillRadius: scaledSize(6)
+    readonly property int pillHeight: scaledSize(30)
+    readonly property int pillHorizontalPadding: scaledSize(10)
     readonly property int pillBorderWidth: 1
-    readonly property int smallRadius: scaledSize(5)
+    readonly property int smallRadius: scaledSize(6)
 
-    readonly property int compactSpacing: scaledSize(5)
-    readonly property int compactWidgetSize: scaledSize(24)
-    readonly property int compactWidgetHorizontalPadding: scaledSize(7)
+    readonly property int compactSpacing: scaledSize(6)
+    readonly property int compactWidgetSize: scaledSize(30)
+    readonly property int compactWidgetHorizontalPadding: scaledSize(8)
 
-    readonly property int workspaceButtonSize: scaledSize(24)
-    readonly property int trayItemSize: scaledSize(24)
-    readonly property int trayIconSize: scaledSize(17)
+    readonly property int workspaceButtonSize: scaledSize(30)
+    readonly property int trayItemSize: scaledSize(30)
+    readonly property int trayIconSize: scaledSize(22)
 
     readonly property int underlineHeight: scaledSize(2)
-    readonly property int underlineWidth: scaledSize(12)
-    readonly property int occupiedMarkWidth: scaledSize(3)
+    readonly property int underlineWidth: scaledSize(16)
+    readonly property int occupiedMarkWidth: scaledSize(4)
 
     readonly property int separatorWidth: 1
-    readonly property int separatorHeight: scaledSize(12)
+    readonly property int separatorHeight: scaledSize(16)
 
     readonly property real titleWidthFraction: 0.18
-    readonly property int titleMinWidth: scaledSize(120)
+    readonly property int titleMinWidth: scaledSize(150)
 
     readonly property real dockWidthFraction: 0.20
-    readonly property int dockMinimumWidth: scaledSize(96)
+    readonly property int dockMinimumWidth: scaledSize(120)
 
-    readonly property int panelFontSize: scaledFontSize(13, 10)
-    readonly property int smallFontSize: scaledFontSize(12, 10)
-    readonly property int tinyFontSize: scaledFontSize(10, 8)
-    readonly property int panelIconFontSize: scaledFontSize(14, 8)
+    readonly property int panelFontSize: scaledFontSize(15, 10)
+    readonly property int smallFontSize: scaledFontSize(14, 10)
+    readonly property int tinyFontSize: scaledFontSize(11, 8)
+    readonly property int panelIconFontSize: scaledFontSize(17, 8)
 
-    readonly property real clockLetterSpacing: 0.8
+    /* Whole pixels. NativeRendering places glyphs on the pixel grid, so a
+     * fractional tracking value put every character after the first on a
+     * fraction and softened the one label that is always on screen. */
+    readonly property real clockLetterSpacing: 1.0
 
     readonly property int animationNormal: 180
 }
