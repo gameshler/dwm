@@ -1,0 +1,40 @@
+#!/bin/sh
+# Opens one bookmark. Called by the bar's Bookmarks menu with the file the
+# bookmark came from and its URL.
+#
+# The tag picks the browser so work and personal browsing stay in separate
+# profiles, which is the only reason the bookmarks live in two files. Either
+# browser being absent falls through to the desktop default rather than
+# failing.
+set -eu
+
+[ $# -eq 2 ] || {
+	printf 'usage: dwm-bookmark-open <personal|work> <url>\n' >&2
+	exit 2
+}
+
+tag=$1
+url=$2
+
+case "$url" in
+http://* | https://* | file://* | about:* | chrome:*) ;;
+*) url="https://$url" ;;
+esac
+
+case "$tag" in
+personal) preferred=$(command -v firefox || true) ;;
+work) preferred=$(command -v brave || command -v brave-browser || true) ;;
+*) preferred="" ;;
+esac
+
+if [ -n "$preferred" ]; then
+	exec "$preferred" --new-tab "$url"
+fi
+
+fallback=$(command -v xdg-open || true)
+[ -n "$fallback" ] || {
+	printf 'No browser found for %s\n' "$url" >&2
+	exit 1
+}
+
+exec "$fallback" "$url"

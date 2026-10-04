@@ -1,0 +1,33 @@
+#!/bin/sh
+# Opens one project directory in a terminal running tmux and nvim. Called by
+# the bar's Projects menu with an absolute path.
+#
+# The terminal is replaced rather than added to: this is meant as "switch what
+# I am working on", and tmux keeps the old session alive to come back to. Set
+# DWM_PROJECT_TERMINAL to use something other than ghostty.
+set -eu
+
+[ $# -eq 1 ] || {
+	printf 'usage: dwm-repo-open <directory>\n' >&2
+	exit 2
+}
+
+dir=$1
+[ -d "$dir" ] || {
+	printf 'Not a directory: %s\n' "$dir" >&2
+	exit 1
+}
+
+terminal=${DWM_PROJECT_TERMINAL:-ghostty}
+command -v "$terminal" >/dev/null 2>&1 || {
+	printf 'Terminal not found: %s\n' "$terminal" >&2
+	exit 1
+}
+
+# tmux session names cannot contain a dot or a colon.
+name=$(basename "$dir" | tr '.:' '__')
+
+pkill -x "$terminal" 2>/dev/null || true
+sleep 0.1
+
+exec "$terminal" -e tmux new-session -As "$name" -c "$dir" "nvim ."
