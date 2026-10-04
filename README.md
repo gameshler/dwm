@@ -164,10 +164,18 @@ Screenshots:
 | `Super + Shift + p` | Select a region, saved to disk |
 | `Super + Ctrl + p` | Select a region, copied to the clipboard |
 
-> The two that save to disk write to `/media/drive/Screenshots/`, which is
-> specific to the author's machine. If that path does not exist on yours,
-> change it in the two `flameshot` lines in `config.h` and rebuild, or create
-> the directory.
+> The two that save to disk write to `~/Pictures/Screenshots`, creating it on
+> first use. Set `DWM_SCREENSHOT_DIR` in `~/.xprofile` to send them somewhere
+> else; no rebuild is needed.
+>
+> ```sh
+> export DWM_SCREENSHOT_DIR=/media/drive/Screenshots
+> ```
+>
+> `flameshot` fails silently when the directory it is given does not exist, so
+> an external drive that is not mounted at login loses the shot rather than
+> reporting an error. Keep the fallback in mind before pointing this at
+> removable storage.
 
 Session:
 

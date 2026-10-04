@@ -109,6 +109,14 @@ static const Layout layouts[] = {
   {                                                                            \
     .v = (const char *[]) { "/bin/sh", "-c", cmd, NULL }                       \
   }
+/* flameshot writes nothing and says nothing when its -p directory is missing,
+ * so the old hardcoded /media/drive/Screenshots/ lost every screenshot taken
+ * on a boot where that drive was not mounted, and on any other machine. This
+ * creates the directory first and reads $DWM_SCREENSHOT_DIR, so pointing it
+ * somewhere else needs no rebuild. */
+#define SCREENSHOT(mode)                                                       \
+  SHCMD("dir=\"${DWM_SCREENSHOT_DIR:-$HOME/Pictures/Screenshots}\"; "          \
+        "mkdir -p \"$dir\" && flameshot " mode " -p \"$dir\"")
 #define STATUSBAR "dwmblocks"
 /* commands */
 static const char *launchercmd[] = {"rofi", "-show", "drun", NULL};
@@ -129,8 +137,8 @@ static Keychord *keychords[] = {
 
     /* Screenshots */ 
 
-    &((Keychord){1, {{MODKEY, XK_p}}, spawn, SHCMD("flameshot full -p /media/drive/Screenshots/")}),
-    &((Keychord){1, {{MODKEY | ShiftMask, XK_p}}, spawn, SHCMD("flameshot gui -p /media/drive/Screenshots/")}),
+    &((Keychord){1, {{MODKEY, XK_p}}, spawn, SCREENSHOT("full")}),
+    &((Keychord){1, {{MODKEY | ShiftMask, XK_p}}, spawn, SCREENSHOT("gui")}),
     &((Keychord){1, {{MODKEY | ControlMask, XK_p}}, spawn, SHCMD("flameshot gui --clipboard")}),
 
     /* Files & Utilities */ 
