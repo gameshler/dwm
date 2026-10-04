@@ -178,5 +178,19 @@ Singleton {
      * fraction and softened the one label that is always on screen. */
     readonly property real clockLetterSpacing: 1.0
 
+    /* The menus. Width is fixed rather than a fraction of the screen so the
+     * same list does not reflow between the 1080p and 1440p panel, and every
+     * value is even for the same centring reason as the bar above. */
+    readonly property int menuWidth: scaledSize(460)
+    readonly property int menuRowHeight: scaledSize(34)
+    readonly property int menuPadding: scaledSize(12)
+    readonly property int menuSpacing: scaledSize(2)
+    readonly property int menuFieldHeight: scaledSize(34)
+    readonly property int menuIconSize: scaledSize(22)
+    readonly property int menuMaxRows: 9
+
+    readonly property string menuFill: tooltipFill
+    readonly property string menuBorder: borderStrong
+
     readonly property int animationNormal: 180
 }
