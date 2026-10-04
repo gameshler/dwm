@@ -4,7 +4,7 @@ Current phase: Phase 4, defects found on hardware. See `ROADMAP.md`.
 
 ## Current phase
 
-- [ ] Re-verify the seven hardware defects on the machine they were found on.
+- [ ] Re-verify the nine hardware defects on the machine they were found on.
   - Scope: the fixes on `gameshler/fix/post-install-defects`, installed and
     exercised on the same two-monitor Arch machine that reported them.
   - Acceptance criteria, one per defect: GTK 3 applications come up dark;
@@ -12,7 +12,10 @@ Current phase: Phase 4, defects found on hardware. See `ROADMAP.md`.
     the clock are sharp; the update count changes within seconds of a `pacman`
     transaction rather than within half an hour; every power menu entry either
     acts or says why; a monitor named first in `~/.config/dwm/monitors.conf`
-    is the one on the left.
+    is the one on the left; hovering a tag, a dock icon or a pill shows a
+    fill, and the bar has a visible bottom edge over a black wallpaper;
+    `Super + p` and `Super + Shift + p` leave a file in
+    `~/Pictures/Screenshots` with no drive mounted.
   - Automated validation: passed already - `make CC="cc -Werror"` zero
     warnings, `make lint` zero findings, `make check` nine of nine including
     renders at 40 physical pixels across five widths and 60/80 at ratios 1.5
