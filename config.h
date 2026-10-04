@@ -133,14 +133,13 @@ static const Layout layouts[] = {
         "call " target " toggle")
 #define STATUSBAR "dwmblocks"
 /* commands */
-static const char *launchercmd[] = {"rofi", "-show", "drun", NULL};
 static const char *termcmd[] = {"ghostty", NULL};
 
 static Keychord *keychords[] = {
 
     /* Launchers */ 
     
-    &((Keychord){1, {{MODKEY, XK_r}}, spawn, {.v = launchercmd}}),
+    &((Keychord){1, {{MODKEY, XK_r}}, spawn, QSMENU("apps")}),
     &((Keychord){1, {{MODKEY, XK_x}}, spawn, {.v = termcmd}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_w}}, spawn, SHCMD("feh --randomize --bg-fill ~/Pictures/backgrounds/*")}),
     

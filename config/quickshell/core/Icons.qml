@@ -20,6 +20,21 @@ Singleton {
         return Quickshell.iconPath(iconName, "application-x-executable");
     }
 
+    /* Unlike launcherIcon, this reports failure. The dock draws the generic
+     * icon rather than a hole, but a menu row has a glyph to fall back on and
+     * an unresolvable path there renders as a broken image instead. Both
+     * lookups use the checking overload, which returns an empty string rather
+     * than a path that will not load. */
+    function applicationIcon(iconName) {
+        const resolved = iconName.length > 0 ? Quickshell.iconPath(iconName, true) : "";
+
+        if (resolved.length > 0) {
+            return resolved;
+        }
+
+        return Quickshell.iconPath("application-x-executable", true);
+    }
+
     function trayIconSource(trayItem) {
         const sources = trayIconSources(trayItem);
         return sources.length > 0 ? sources[0] : "";

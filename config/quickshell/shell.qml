@@ -16,7 +16,7 @@ ShellRoot {
     /* Only ever one menu open: they all want the keyboard, and dwm gives it to
      * whichever window mapped last. Opening one closes the others rather than
      * racing them. */
-    readonly property var menus: [powerMenu, repoMenu, bookmarkMenu]
+    readonly property var menus: [appMenu, powerMenu, repoMenu, bookmarkMenu]
 
     function openMenu(menu) {
         for (let index = 0; index < root.menus.length; index++) {
@@ -64,6 +64,10 @@ ShellRoot {
         id: updateModel
     }
 
+    AppMenuModel {
+        id: appMenu
+    }
+
     PowerMenuModel {
         id: powerMenu
     }
@@ -81,6 +85,14 @@ ShellRoot {
      * window kept whatever height the first menu to open happened to need.
      * Destroying it on close means the next menu arrives as a new window, sized
      * to its own list. */
+    LazyLoader {
+        active: appMenu.shown
+
+        MenuWindow {
+            menu: appMenu
+        }
+    }
+
     LazyLoader {
         active: powerMenu.shown
 
@@ -121,6 +133,22 @@ ShellRoot {
             updateModel: updateModel
             primaryPanel: modelData === Quickshell.screens[0]
             onPowerMenuRequested: root.toggleMenu(powerMenu)
+        }
+    }
+
+    IpcHandler {
+        target: "apps"
+
+        function open(): void {
+            root.openMenu(appMenu);
+        }
+
+        function close(): void {
+            appMenu.close();
+        }
+
+        function toggle(): void {
+            root.toggleMenu(appMenu);
         }
     }
 
