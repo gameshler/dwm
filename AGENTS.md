@@ -73,9 +73,15 @@ make lint                   # shellcheck -x, shfmt -d, then tools/qml-lint.sh
 make check                  # the tests/ suite
 make check-layout           # one test on its own; see the Makefile for the list
 make clean
+make install-config         # the ~/.config half of install; no root
 sudo make install           # needs root for /usr/local/bin and /usr/share/xsessions
 ./install.sh                # packages, build, sudo make install, wallpapers
 ```
+
+`install-config` stages each config directory beside its target and renames it
+into place. Never copy over the live directory: the bar watches
+`~/.config/quickshell`, reloads on any change, and does not survive being handed
+a half-installed tree. `tests/test-install-config.sh` guards this.
 
 `make install` writes the binary to `${PREFIX}/bin`, the man page to
 `${MANPREFIX}`, and a session entry to `/usr/share/xsessions`, so it needs

@@ -452,11 +452,19 @@ make lint              # shellcheck -x, shfmt -d, then qmllint
 make check             # the tests/ suite
 make clean
 sudo make install      # install the binary, session entry, config and scripts
+make install-config    # just the ~/.config half, no root needed
 ```
 
 Each test also runs on its own: `make check-design-system`, `check-tray`,
 `check-layout`, `check-state-protocol`, `check-launcher`, `check-state`,
-`check-bar-xvfb`.
+`check-bar-xvfb`, `check-menus-xvfb`, `check-install-config`.
+
+`make install` places each config directory by staging a complete copy beside
+it and renaming it into place, never by writing over the live one. The bar
+watches `~/.config/quickshell` and reloads on any change, so a copy that writes
+the tree file by file gives it a half-installed config to compile, and it does
+not survive that. `install-config` is that half of the install on its own; it
+needs no root, because nothing outside `$HOME` is written.
 
 `make lint` needs `shellcheck`, `shfmt` and `qt6-declarative`. Any warning fails
 the run. qmllint cannot see the `qs.*` modules on its own, because Quickshell
@@ -533,6 +541,14 @@ that the file exists.
 **An indicator is missing.** That is deliberate: each one hides itself when its
 hardware or its tool is absent. See the optional packages in
 [Requirements](#requirements).
+
+**The bar vanished after `sudo make install`, or says it failed to reload.**
+Fixed, but an older checkout still does it: the install used to write the new
+config over the live one file by file, and the bar, which reloads on any change
+to `~/.config/quickshell`, would try to compile a half-installed tree and die.
+Nothing restarts it, which is why a reboot looked like the only way back. Pull,
+re-run `sudo make install`, and start the bar again with
+`~/.local/bin/quickshell-launch.sh &` — no reboot needed.
 
 **GTK applications come up light.** Check that
 `~/.config/gtk-3.0/settings.ini` names `Adwaita` and not `Adwaita-dark`. GTK 3
