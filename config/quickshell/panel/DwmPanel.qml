@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.core
 
 // qmllint disable uncreatable-type
@@ -18,6 +17,8 @@ PanelWindow {
     required property var networkModel
     required property var updateModel
     required property bool primaryPanel
+
+    signal powerMenuRequested()
 
     implicitHeight: Theme.panelHeight
     color: Theme.barBackground
@@ -53,13 +54,6 @@ PanelWindow {
         top: true
         left: true
         right: true
-    }
-
-    Process {
-        id: powerMenuProcess
-
-        command: ["sh", "-c", "$HOME/.config/rofi/powermenu.sh"]
-        running: false
     }
 
     /* Must stay in step with the delegate in the status row below. */
@@ -422,7 +416,7 @@ PanelWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: powerMenuProcess.startDetached()
+                        onClicked: root.powerMenuRequested()
                     }
                 }
             }

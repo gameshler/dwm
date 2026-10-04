@@ -37,8 +37,8 @@ lint:
 # check-bar-xvfb exits 77 - treated as a skip - when Quickshell or Xvfb is
 # absent.
 check: check-design-system check-tray check-layout check-state-protocol \
-	check-launcher check-state check-powermenu check-display-setup \
-	check-bar-xvfb
+	check-launcher check-state check-session-action check-display-setup \
+	check-bar-xvfb check-menus-xvfb
 
 check-design-system:
 	tests/test-quickshell-design-system.sh
@@ -58,14 +58,19 @@ check-launcher:
 check-state:
 	tests/test-dwm-quickshell-state.sh
 
-check-powermenu:
-	tests/test-powermenu.sh
+check-session-action:
+	tests/test-session-action.sh
 
 check-display-setup:
 	tests/test-display-setup.sh
 
 check-bar-xvfb: dwm
 	@status=0; tests/test-bar-xvfb.sh || status=$$?; \
+		if [ "$$status" -eq 77 ]; then exit 0; fi; \
+		exit "$$status"
+
+check-menus-xvfb: dwm
+	@status=0; tests/test-menus-xvfb.sh || status=$$?; \
 		if [ "$$status" -eq 77 ]; then exit 0; fi; \
 		exit "$$status"
 
@@ -116,4 +121,4 @@ release: dwm
 
 .PHONY: all clean lint install uninstall release check check-design-system \
 	check-tray check-layout check-state-protocol check-launcher check-state \
-	check-powermenu check-display-setup check-bar-xvfb
+	check-session-action check-display-setup check-bar-xvfb check-menus-xvfb

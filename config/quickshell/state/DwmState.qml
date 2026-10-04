@@ -17,8 +17,20 @@ Scope {
     property string statusText: ""
     property var statusSegments: []
 
+    /* The title MenuWindow gives every bar menu, and the one config.h matches
+     * on to float them. They are ordinary managed windows - that is the only
+     * way dwm will focus them - so dwm reports one as the active window the
+     * moment it opens, and the bar would replace the title of whatever the user
+     * is working in with the name of the menu they are looking at. */
+    readonly property string menuWindowTitle: "dwm-menu"
+
     function parseState(text) {
         const lines = text.trim().split("\n");
+        /* Held back rather than applied as they are read: whether the title is
+         * the menu's decides what happens to the class, and the two arrive as
+         * separate lines in an order this does not control. */
+        let pendingTitle = null;
+        let pendingClass = null;
 
         for (const line of lines) {
             const separator = line.indexOf("=");
@@ -68,13 +80,26 @@ Scope {
                     return { "windowId": app.slice(0, separator), "appClass": app.slice(separator + 1) };
                 }) : [];
             } else if (key === "title") {
-                root.activeWindowTitle = value.length > 0 ? value : "Desktop";
+                pendingTitle = value;
             } else if (key === "class") {
-                root.activeWindowClass = value.length > 0 ? value : "application-x-executable";
+                pendingClass = value;
             } else if (key === "status") {
                 root.statusText = value;
                 root.updateStatusSegments();
             }
+        }
+
+        if (pendingTitle === root.menuWindowTitle) {
+            return;
+        }
+
+        if (pendingTitle !== null) {
+            root.activeWindowTitle = pendingTitle.length > 0 ? pendingTitle : "Desktop";
+        }
+
+        if (pendingClass !== null) {
+            root.activeWindowClass = pendingClass.length > 0
+                ? pendingClass : "application-x-executable";
         }
     }
 

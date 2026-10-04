@@ -1,0 +1,67 @@
+#!/bin/sh
+# Carries out one session or power action, and says why on stderr when it
+# cannot. The bar's power menu runs this and puts whatever reaches stderr on
+# screen, which is the only way a failure is ever seen: the menu is started
+# detached from the bar, with no terminal attached to print to.
+set -eu
+
+die() {
+	printf '%s\n' "$1" >&2
+	exit 1
+}
+
+usage() {
+	printf 'usage: dwm-session-action logout|suspend|hibernate|reboot|poweroff\n' >&2
+	exit 2
+}
+
+[ $# -eq 1 ] || usage
+
+# pam_systemd sets XDG_SESSION_ID for the login session, but a display manager
+# does not reliably export it into the session's own environment and startx
+# never does, so terminating "$XDG_SESSION_ID" unconditionally was usually
+# called with an empty argument. Ask logind when the variable is missing: the
+# user object's Display property names the primary graphical session. It is
+# typed (so) - session id and object path - so only the first field is the id.
+logout() {
+	sid="${XDG_SESSION_ID:-}"
+	if [ -z "$sid" ]; then
+		sid="$(loginctl --value --property Display show-user "$(id -un)" 2>/dev/null |
+			awk 'NR == 1 { print $1 }' || true)"
+	fi
+
+	if [ -n "$sid" ] && loginctl terminate-session "$sid" 2>/dev/null; then
+		return 0
+	fi
+
+	# Ending dwm ends the X session, which is what logout means here. This is
+	# the path that works under startx, where there may be no logind session to
+	# terminate at all.
+	if pkill -x dwm 2>/dev/null; then
+		return 0
+	fi
+
+	die 'Could not log out: logind reported no session and dwm is not running.'
+}
+
+case "$1" in
+logout)
+	logout
+	;;
+suspend)
+	systemctl suspend || die 'Suspend failed.'
+	;;
+hibernate)
+	systemctl hibernate ||
+		die 'Hibernate failed. It needs swap at least the size of RAM and a resume= kernel parameter.'
+	;;
+reboot)
+	systemctl reboot || die 'Reboot failed.'
+	;;
+poweroff)
+	systemctl poweroff || die 'Shutdown failed.'
+	;;
+*)
+	usage
+	;;
+esac

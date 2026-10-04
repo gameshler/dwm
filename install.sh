@@ -11,7 +11,7 @@ REQUIRED_PACKAGES="
 base-devel git
 libx11 libxinerama libxft libxcb imlib2
 xorg-server xorg-xinit xorg-xprop xorg-xrandr xorg-xsetroot xorg-xset xorg-xrdb
-ghostty rofi picom dunst feh flameshot dex mate-polkit
+ghostty picom dunst feh flameshot dex mate-polkit
 quickshell wmctrl xdotool
 xdg-utils xdg-user-dirs xdg-desktop-portal-gtk
 ttf-firacode-nerd inter-font noto-fonts-emoji

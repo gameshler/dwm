@@ -79,6 +79,13 @@ static const Rule rules[] = {
     {"Steam", NULL, NULL, 1 << 5, 0, 0, 0, -1},
 
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
+
+    /* The bar's menus. Matched on title because Quickshell sets no WM_CLASS on
+       any of its windows. They are ordinary managed windows on purpose: a
+       Quickshell panel or popup is _NET_WM_WINDOW_TYPE_DOCK on X11, dwm does
+       not manage a dock, so it never focuses one and the menu could not take a
+       keystroke. Floating, because a menu that tiles is not a menu. */
+    {NULL, NULL, "dwm-menu", 0, 1, 0, 1, -1},
 };
 
 /* layout(s) */
@@ -117,16 +124,22 @@ static const Layout layouts[] = {
 #define SCREENSHOT(mode)                                                       \
   SHCMD("dir=\"${DWM_SCREENSHOT_DIR:-$HOME/Pictures/Screenshots}\"; "          \
         "mkdir -p \"$dir\" && flameshot " mode " -p \"$dir\"")
+/* The bar's menus are surfaces of the running Quickshell instance, so a
+ * keybinding tells it to open one rather than starting a process. toggle, so
+ * the same key closes what it opened. */
+#define QSMENU(target)                                                         \
+  SHCMD("quickshell ipc --path "                                               \
+        "\"${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/shell.qml\" "          \
+        "call " target " toggle")
 #define STATUSBAR "dwmblocks"
 /* commands */
-static const char *launchercmd[] = {"rofi", "-show", "drun", NULL};
 static const char *termcmd[] = {"ghostty", NULL};
 
 static Keychord *keychords[] = {
 
     /* Launchers */ 
     
-    &((Keychord){1, {{MODKEY, XK_r}}, spawn, {.v = launchercmd}}),
+    &((Keychord){1, {{MODKEY, XK_r}}, spawn, QSMENU("apps")}),
     &((Keychord){1, {{MODKEY, XK_x}}, spawn, {.v = termcmd}}),
     &((Keychord){1, {{MODKEY | ShiftMask, XK_w}}, spawn, SHCMD("feh --randomize --bg-fill ~/Pictures/backgrounds/*")}),
     
@@ -186,15 +199,15 @@ static Keychord *keychords[] = {
     /* Session / Power */ 
 
     &((Keychord){1, {{MODKEY, XK_0}}, view, {.ui = ~0}}),
-    &((Keychord){1, {{MODKEY | ControlMask, XK_q}}, spawn, SHCMD("$HOME/.config/rofi/powermenu.sh")}),
+    &((Keychord){1, {{MODKEY | ControlMask, XK_q}}, spawn, QSMENU("power")}),
     &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_r}}, spawn, SHCMD("systemctl reboot")}),
     &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_s}}, spawn, SHCMD("systemctl suspend")}),
     &((Keychord){1, {{MODKEY|ShiftMask, XK_q}}, quit, {0}}),
 
     /* Scripts */ 
 
-    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_t}}, spawn, SHCMD("$HOME/.config/rofi/repo-finder.sh")}),
-    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_b}}, spawn, SHCMD("$HOME/.config/rofi/bookmarksmenu.sh")}),
+    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_t}}, spawn, QSMENU("repos")}),
+    &((Keychord){1, {{MODKEY | ControlMask | ShiftMask, XK_b}}, spawn, QSMENU("bookmarks")}),
     
     /* Tags */
 

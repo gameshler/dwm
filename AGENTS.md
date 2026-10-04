@@ -3,7 +3,7 @@
 ## Purpose
 
 A patched [dwm](https://dwm.suckless.org) build plus the desktop config that
-surrounds it: a [Quickshell](https://quickshell.org) status bar, rofi menus,
+surrounds it: a [Quickshell](https://quickshell.org) status bar and menus,
 ghostty, picom and dunst. The user is the repo owner running it as a daily
 driver on an Arch-based x86_64 machine under Xorg. Cloning the repo and running
 `./install.sh` should produce that working desktop.
@@ -13,10 +13,11 @@ driver on an Arch-based x86_64 machine under Xorg. Cloning the repo and running
 - `dwm.c`, `drw.c`, `util.c`, `config.h`, `config.mk` - the window manager.
   `config.h` is the real configuration and is tracked; `config.def.h` is the
   upstream default the Makefile would copy if `config.h` were absent.
-- `config/quickshell/` - the bar, 22 QML files in four groups. `shell.qml` is
-  the entry point. `core/` holds shared visuals and singletons, `panel/` the
-  bar and its items, `services/` the optional pills (audio, battery,
-  bluetooth, network, updates), `state/DwmState.qml` the bridge to dwm.
+- `config/quickshell/` - the bar and its menus, 30 QML files in five groups.
+  `shell.qml` is the entry point. `core/` holds shared visuals and singletons,
+  `panel/` the bar and its items, `menu/` the four menus the bar draws,
+  `services/` the optional pills (audio, battery, bluetooth, network, updates),
+  `state/DwmState.qml` the bridge to dwm.
   `core/Theme.qml` is the single source of every colour and dimension; its
   header explains the design rules the rest of the bar follows.
 - `config/gtk-3.0/`, `config/gtk-4.0/` - the dark theme for GTK applications,
@@ -30,8 +31,7 @@ driver on an Arch-based x86_64 machine under Xorg. Cloning the repo and running
 - `tools/qml-lint.sh` - rebuilds Quickshell's runtime `qs.*` module tree in a
   temp directory so qmllint can run offline, with no X server and no running
   shell.
-- `config/rofi/`, `debug/`, `backgrounds/` - menus, EWMH debug helpers,
-  wallpapers.
+- `debug/`, `backgrounds/` - EWMH debug helpers, wallpapers.
 - `install.sh` - standalone installer. `Makefile` `install` target - the file
   copies only, used by `install.sh` and by the archsetup dwm tab.
 - `.github/workflows/c.yaml` - four jobs: `build`, `shell`, `qml`, `tests`.
