@@ -124,7 +124,7 @@ archsetup dwm tab installs against it correctly.
 ### Dependencies and risks
 
 - Merge ordering is load-bearing. Every archsetup path reads this repo's
-  `main`: its dwm tab clones it, and its ghostty and rofi steps `curl`
+  `main`: its dwm tab clones it, and its ghostty step `curl`s
   individual files from it. This repo must merge before archsetup PR #21, or
   the tab installs Quickshell packages onto a polybar config.
 - The tree carries 40-odd polybar deletions staged alongside untracked new
@@ -198,8 +198,9 @@ every control doing what it says.
 
 ## Phase 5: The menus move into the bar
 
-The power menu, the project finder and the bookmarks menu were three rofi
-scripts. They are now three surfaces of the running bar, opened over IPC.
+The power menu, the project finder, the bookmarks menu and the application
+launcher were rofi. They are now four surfaces of the running bar, opened over
+IPC.
 
 Why: the power menu was the one piece of this desktop that had never fully
 worked, and the shell-and-rofi shape was most of the reason. A menu that is
@@ -216,9 +217,9 @@ destroyed on close rather than reused.
 
 Exit criteria:
 
-- Each of the three keybindings opens and closes its menu.
+- Each of the four keybindings opens and closes its menu.
 - The menu takes keyboard focus with no click, and filters, navigates, acts and
   dismisses from the keyboard alone.
 - A failing power action states its reason on the menu.
-- The rofi scripts they replace are gone, and rofi remains only as the
-  application launcher.
+- The rofi scripts and theme they replace are gone, and nothing in the tree
+  calls rofi.

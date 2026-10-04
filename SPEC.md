@@ -198,7 +198,7 @@ Automated, and required before any change is reported done:
 - `make CC="cc -Werror"` succeeds with zero warnings under the `-Wextra` set in
   `config.mk`.
 - `make lint` reports zero shellcheck findings, zero shfmt diff lines, and zero
-  qmllint warnings across all 22 QML files.
+  qmllint warnings across all 30 QML files.
 - All four CI jobs pass: `build`, `shell`, `qml`, `tests`.
 
 Manual, and required before the branch merges:
@@ -223,8 +223,8 @@ Manual, and required before the branch merges:
   what makes a clone carry the real keybindings.
 - HiDPI scaling is driven by `Xft.dpi` and nothing else. `scripts/.xprofile`
   loads `~/.Xresources`, and `scripts/quickshell-launch.sh` translates the value
-  into `QT_FONT_DPI` for the bar. One setting scales dwm's font, rofi and the
-  bar together.
+  into `QT_FONT_DPI` for the bar. One setting scales dwm's font and the bar
+  together.
 
   The bar does not derive its scale from the screen, and deliberately so.
   Measured under Xvfb on Qt 6.11: Qt on xcb ignores both `Xft.dpi` and the

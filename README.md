@@ -45,14 +45,14 @@ your attention.
 | | |
 |---|---|
 | **Window manager** | dwm 0.3, patched (see [Project layout](#project-layout)) |
-| **Status bar** | Quickshell, 22 QML files in `config/quickshell` |
+| **Status bar** | Quickshell, 30 QML files in `config/quickshell` |
 | **Terminal** | ghostty |
 | **Menus** | Power, projects and bookmarks, drawn by the bar |
-| **Launcher** | rofi — application launcher |
+| **Launcher** | The bar's own app menu, from the XDG desktop entries |
 | **Notifications** | dunst |
 | **Compositor** | picom |
 | **Screenshots** | flameshot |
-| **Theme** | Black with Nord accents, applied to dwm, the bar, the menus, rofi, GTK and Qt |
+| **Theme** | Black with Nord accents, applied to dwm, the bar, the menus, GTK and Qt |
 
 Nine workspaces, three layouts (tiled, floating, monocle), and multi-monitor
 support with the workspaces split across whatever screens you have.
@@ -78,8 +78,7 @@ The installer asks for your password when it needs root. It will:
 Then log out and log back in, choosing **dwm** at your login screen. Without a
 login manager, log in on a TTY and run `startx`.
 
-Press **Super + r** to open the application launcher and **Super + x** for a
-terminal.
+Press **Super + r** for the app menu and **Super + x** for a terminal.
 
 Re-run `./install.sh` any time to pick up changes. It refreshes the files this
 repo ships and leaves anything else in those directories alone.
@@ -104,7 +103,7 @@ Launching things:
 
 | Shortcut | Action |
 |---|---|
-| `Super + r` | Application launcher |
+| `Super + r` | App menu |
 | `Super + x` | Terminal |
 | `Super + e` | File manager |
 | `Super + b` | Browser |
@@ -228,17 +227,26 @@ Hovering any indicator shows a tooltip with the detail.
 
 ### The menus
 
-Three menus are drawn by the bar itself. They all work the same way: type to
+Four menus are drawn by the bar itself. They all work the same way: type to
 filter, `Up`/`Down` or `Ctrl+p`/`Ctrl+n` to move, `Enter` to pick, `Escape` to
-dismiss, or click a row. The same key that opens one closes it.
+dismiss, or click a row. The part of a name your filter matched is picked out in
+the accent colour, the count beside the field shows how far it narrowed, and the
+keys are listed along the bottom of the menu. The same key that opens one closes
+it.
 
 | Shortcut | Menu | What it lists |
 |---|---|---|
+| `Super + r` | Apps | Every installed application |
 | `Super + Ctrl + q` | Power | Log out, suspend, hibernate, restart, shut down |
 | `Super + Ctrl + Shift + t` | Projects | Every directory in `~/projects` |
 | `Super + Ctrl + Shift + b` | Bookmarks | Your two bookmark files |
 
 The bar's power button opens the power menu too.
+
+**Apps.** The XDG desktop entries, the same list any desktop menu shows, with
+each application's own icon. Entries marked `Hidden` or `NoDisplay` are left out.
+An entry with `Terminal=true` is opened inside a terminal; set `DWM_TERMINAL` to
+use something other than ghostty.
 
 **Power.** Suspend and hibernate appear only when `/sys/power/state` names them.
 When an action fails, the reason appears in red on the menu rather than
@@ -279,7 +287,7 @@ Xft.dpi: 192
 
 `192` is 2x and `144` is 1.5x. Log out and back in.
 
-That one value sizes dwm's font, rofi and the bar together.
+That one value sizes dwm's font and the bar together.
 `scripts/.xprofile` loads the file — both the `startx` path and a login manager
 source it — and `scripts/quickshell-launch.sh` passes the value on to Qt as
 `QT_FONT_DPI`, because Qt is the one toolkit here that does not read `Xft.dpi`
@@ -357,7 +365,6 @@ dropped.
 | Every bar colour and dimension | `config/quickshell/core/Theme.qml` |
 | dwm's own window border colours | `config.h` (kept in sync with `Theme.qml`) |
 | Menu sizing and colours | `config/quickshell/core/Theme.qml` |
-| rofi launcher theme | `config/rofi/` |
 | GTK dark theme | `config/gtk-3.0/`, `config/gtk-4.0/` |
 | Session environment | `scripts/.xprofile` |
 
@@ -396,7 +403,7 @@ binary.
 | `quickshell` | The bar |
 | `wmctrl` | Clicking a workspace or an application in the bar |
 | `xdotool` | Tracking the focused window |
-| `ghostty`, `rofi` | Terminal and menus |
+| `ghostty` | Terminal |
 | `picom`, `dunst`, `feh`, `flameshot` | Compositor, notifications, wallpaper, screenshots |
 | `dex`, `mate-polkit` | Autostart entries and the polkit agent |
 | `xdg-utils`, `xdg-user-dirs`, `xdg-desktop-portal-gtk` | `xdg-open`, user directories, the portal Qt and libadwaita read |
@@ -482,14 +489,13 @@ order) and `TASKS.md` (current work).
 dwm.c, drw.c, util.c     the window manager
 config.h                 keybindings, rules, autostart, colours (compiled in)
 config.mk                build flags
-config/quickshell/       the bar: 22 QML files
+config/quickshell/       the bar and its menus: 30 QML files
   shell.qml                entry point
   core/                    shared visuals and singletons, including Theme.qml
   panel/                   the bar and its items
   services/                the optional indicators
   state/DwmState.qml       the bridge to dwm
   menu/                    the power, projects and bookmarks menus
-config/rofi/             the rofi application launcher and its theme
 config/gtk-3.0/, gtk-4.0/  the dark theme for GTK applications
 scripts/                 installed to ~/.local/bin; .xinitrc and .xprofile to $HOME
 tools/qml-lint.sh        offline qmllint wrapper
