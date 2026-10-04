@@ -43,7 +43,7 @@ Interaction:
 - Left-clicking the volume pill opens `pavucontrol`. Scrolling it changes the
   volume; middle-clicking mutes.
 - Clicking the update pill opens a terminal running `pacman -Syu`.
-- Clicking the power pill opens the rofi power menu.
+- Clicking the power pill opens the bar's power menu.
 
 Error, empty and recovery behavior:
 

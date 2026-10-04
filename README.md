@@ -27,6 +27,7 @@ your attention.
 - [Daily use](#daily-use)
   - [Keyboard shortcuts](#keyboard-shortcuts)
   - [The bar](#the-bar)
+  - [The menus](#the-menus)
 - [Configuration](#configuration)
   - [HiDPI and 4K screens](#hidpi-and-4k-screens)
   - [Small screens](#small-screens)
@@ -46,11 +47,12 @@ your attention.
 | **Window manager** | dwm 0.3, patched (see [Project layout](#project-layout)) |
 | **Status bar** | Quickshell, 22 QML files in `config/quickshell` |
 | **Terminal** | ghostty |
-| **Menus and launcher** | rofi — application launcher, power menu, repository finder, bookmarks |
+| **Menus** | Power, projects and bookmarks, drawn by the bar |
+| **Launcher** | rofi — application launcher |
 | **Notifications** | dunst |
 | **Compositor** | picom |
 | **Screenshots** | flameshot |
-| **Theme** | Black with Nord accents, applied to dwm, the bar, rofi, GTK and Qt |
+| **Theme** | Black with Nord accents, applied to dwm, the bar, the menus, rofi, GTK and Qt |
 
 Nine workspaces, three layouts (tiled, floating, monocle), and multi-monitor
 support with the workspaces split across whatever screens you have.
@@ -224,6 +226,47 @@ Left to right:
 
 Hovering any indicator shows a tooltip with the detail.
 
+### The menus
+
+Three menus are drawn by the bar itself. They all work the same way: type to
+filter, `Up`/`Down` or `Ctrl+p`/`Ctrl+n` to move, `Enter` to pick, `Escape` to
+dismiss, or click a row. The same key that opens one closes it.
+
+| Shortcut | Menu | What it lists |
+|---|---|---|
+| `Super + Ctrl + q` | Power | Log out, suspend, hibernate, restart, shut down |
+| `Super + Ctrl + Shift + t` | Projects | Every directory in `~/projects` |
+| `Super + Ctrl + Shift + b` | Bookmarks | Your two bookmark files |
+
+The bar's power button opens the power menu too.
+
+**Power.** Suspend and hibernate appear only when `/sys/power/state` names them.
+When an action fails, the reason appears in red on the menu rather than
+vanishing - these run detached, so there is no terminal for an error to reach.
+
+**Projects.** Lists `~/projects` one level deep, re-read every time the menu
+opens so a clone made a minute ago is there. Picking one replaces the terminal
+with `tmux` and `nvim` in that directory; the old `tmux` session stays alive to
+return to. Set `DWM_PROJECTS_DIR` to look somewhere else, or
+`DWM_PROJECT_TERMINAL` to use something other than ghostty.
+
+**Bookmarks.** Reads `~/.config/bookmarks/personal.txt` and `work.txt`, one
+bookmark per line, in either shape:
+
+```
+https://youtube.com                       # title taken from the host
+Arch Wiki :: https://wiki.archlinux.org   # title given explicitly
+```
+
+Blank lines and `#` lines are skipped. The file decides the browser: personal
+opens in Firefox, work in Brave, and either falling back to `xdg-open`. That is
+the whole reason there are two files. Edits are picked up without restarting the
+bar. Neither file is created for you.
+
+These are ordinary managed windows rather than panel overlays, because dwm only
+gives keyboard focus to windows it manages. `rules[]` in `config.h` carries the
+`dwm-menu` entry that keeps them floating; if you rewrite `rules[]`, keep it.
+
 ## Configuration
 
 ### HiDPI and 4K screens
@@ -313,7 +356,8 @@ dropped.
 | Shortcuts, window rules, autostart | `config.h`, then rebuild |
 | Every bar colour and dimension | `config/quickshell/core/Theme.qml` |
 | dwm's own window border colours | `config.h` (kept in sync with `Theme.qml`) |
-| rofi menus and theme | `config/rofi/` |
+| Menu sizing and colours | `config/quickshell/core/Theme.qml` |
+| rofi launcher theme | `config/rofi/` |
 | GTK dark theme | `config/gtk-3.0/`, `config/gtk-4.0/` |
 | Session environment | `scripts/.xprofile` |
 
@@ -444,7 +488,8 @@ config/quickshell/       the bar: 22 QML files
   panel/                   the bar and its items
   services/                the optional indicators
   state/DwmState.qml       the bridge to dwm
-config/rofi/             launcher, power menu, repo finder, bookmarks
+  menu/                    the power, projects and bookmarks menus
+config/rofi/             the rofi application launcher and its theme
 config/gtk-3.0/, gtk-4.0/  the dark theme for GTK applications
 scripts/                 installed to ~/.local/bin; .xinitrc and .xprofile to $HOME
 tools/qml-lint.sh        offline qmllint wrapper
@@ -495,10 +540,19 @@ differs on purpose.
 **A monitor is on the wrong side.** See [Monitor
 arrangement](#monitor-arrangement).
 
-**A power menu entry does nothing.** It should now say why in a rofi dialog.
-Suspend and hibernate are only offered when `/sys/power/state` names them;
-hibernate additionally needs swap at least the size of RAM and a `resume=`
-kernel parameter.
+**A power menu entry does nothing.** It now says why on the menu itself, in
+red under the list. Suspend and hibernate are only offered when
+`/sys/power/state` names them; hibernate additionally needs swap at least the
+size of RAM and a `resume=` kernel parameter.
+
+**A menu opens but will not take a keystroke.** The menus are ordinary managed
+windows so that dwm focuses them, which depends on the `dwm-menu` entry in
+`rules[]` in `config.h`. If you edited `rules[]`, check that entry is still
+there, then rebuild.
+
+**A menu is empty.** Projects reads `~/projects` (override with
+`DWM_PROJECTS_DIR`), bookmarks reads `~/.config/bookmarks/personal.txt` and
+`work.txt`. Neither is created for you.
 
 ### Bookmarks menu
 

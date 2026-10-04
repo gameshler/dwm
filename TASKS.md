@@ -1,8 +1,27 @@
 # Project tasks
 
-Current phase: Phase 4, defects found on hardware. See `ROADMAP.md`.
+Current phase: Phase 5, the menus move into the bar. See `ROADMAP.md`.
 
 ## Current phase
+
+- [ ] Run the three bar menus on hardware.
+  - Scope: the power, projects and bookmarks menus on
+    `gameshler/feat/quickshell-menus`, which replace the three rofi scripts.
+  - Acceptance criteria: each keybinding opens its menu and the same key closes
+    it; the menu takes keyboard focus immediately, with no click; typing
+    filters, the arrows move, Enter acts and Escape dismisses; every power entry
+    either acts or says why on the menu; a project with a space in its name
+    opens; a work bookmark opens in Brave and a personal one in Firefox; the
+    bar keeps showing the real focused window's title while a menu is open.
+  - Automated validation: passed - `make CC="cc -Werror"` zero warnings,
+    `make lint` zero findings, `make check` ten of ten.
+    `tests/test-menus-xvfb.sh` drives all three menus through IPC and the real
+    keyboard under Xvfb and asserts what each one executed;
+    `tests/test-session-action.sh` covers the helper against stubs.
+  - Manual validation: is the task. A container cannot prove a real logout, a
+    real suspend, or that Brave and Firefox are the browsers that open.
+  - Dependencies or blockers: stacked on `gameshler/fix/post-install-defects`
+    (pull request #3), which must merge first.
 
 - [ ] Re-verify the nine hardware defects on the machine they were found on.
   - Scope: the fixes on `gameshler/fix/post-install-defects`, installed and

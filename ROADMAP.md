@@ -195,3 +195,30 @@ every control doing what it says.
 - Rendered evidence: the bar screenshotted before and after at 2560x1440.
 - Rollback: revert the merge commit and re-run `install.sh`. Nothing here
   holds state.
+
+## Phase 5: The menus move into the bar
+
+The power menu, the project finder and the bookmarks menu were three rofi
+scripts. They are now three surfaces of the running bar, opened over IPC.
+
+Why: the power menu was the one piece of this desktop that had never fully
+worked, and the shell-and-rofi shape was most of the reason. A menu that is
+part of the bar shares its theme, reports its own failures on screen instead of
+to a stderr nobody reads, and needs no second toolkit to be themed and kept in
+step.
+
+The load-bearing constraint: Quickshell's panels and popups are
+`_NET_WM_WINDOW_TYPE_DOCK` on X11, and dwm does not focus a dock, so a menu
+built that way cannot take a keystroke. The menus are therefore ordinary managed
+windows with a `rules[]` entry that floats them. dwm fixes a floating client's
+geometry when it first manages it, so each menu's window is created on open and
+destroyed on close rather than reused.
+
+Exit criteria:
+
+- Each of the three keybindings opens and closes its menu.
+- The menu takes keyboard focus with no click, and filters, navigates, acts and
+  dismisses from the keyboard alone.
+- A failing power action states its reason on the menu.
+- The rofi scripts they replace are gone, and rofi remains only as the
+  application launcher.

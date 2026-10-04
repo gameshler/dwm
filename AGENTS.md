@@ -3,7 +3,7 @@
 ## Purpose
 
 A patched [dwm](https://dwm.suckless.org) build plus the desktop config that
-surrounds it: a [Quickshell](https://quickshell.org) status bar, rofi menus,
+surrounds it: a [Quickshell](https://quickshell.org) status bar and menus,
 ghostty, picom and dunst. The user is the repo owner running it as a daily
 driver on an Arch-based x86_64 machine under Xorg. Cloning the repo and running
 `./install.sh` should produce that working desktop.
