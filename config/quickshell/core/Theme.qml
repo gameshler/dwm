@@ -15,12 +15,34 @@ Singleton {
     readonly property string bg: "#000000"
     readonly property string barBackground: "#000000"
 
-    readonly property string surface: "#101014"
-    readonly property string surfaceHover: "#17171D"
-    readonly property string surfaceActive: "#1E1E26"
+    /* The header above says fills and borders exist only for hover and
+     * selection. They were too dark to do that job. Against the #000000 bar:
+     *
+     *   surfaceHover    #26262F   1.40:1   was #17171D at 1.18:1 - hovering a
+     *                                      tag, a dock icon or a pill lit a
+     *                                      rectangle nobody could see, so the
+     *                                      bar read as having no hover at all
+     *   surfaceActive   #33333F   1.69:1   was #1E1E26 at 1.27:1. Reachable
+     *                                      only through PanelPill.active,
+     *                                      which nothing sets today, so this
+     *                                      moves to stay one step above hover
+     *   border          #26262F   1.40:1   was #1A1A20 at 1.21:1. This draws
+     *                                      the separators and the bar's bottom
+     *                                      edge, both of which sat on a black
+     *                                      wallpaper and vanished into it
+     *   borderStrong    #3A3A48   1.88:1   was #2E2E3A at 1.57:1. The tooltip
+     *                                      outline, over application windows
+     *                                      rather than over the bar
+     *
+     * Still dark enough that nothing draws a box at rest - every one of these
+     * appears on hover or as a hairline. surface has no reference at all; it
+     * moves with the ramp so it stays coherent if something reaches for it. */
+    readonly property string surface: "#15151B"
+    readonly property string surfaceHover: "#26262F"
+    readonly property string surfaceActive: "#33333F"
 
-    readonly property string border: "#1A1A20"
-    readonly property string borderStrong: "#2E2E3A"
+    readonly property string border: "#26262F"
+    readonly property string borderStrong: "#3A3A48"
 
     /* Contrast against the #000000 bar, measured as a WCAG ratio:
      *
