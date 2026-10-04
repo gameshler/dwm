@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import QtQuick
 import Quickshell
 import Quickshell.Io
 
@@ -18,7 +19,11 @@ MenuModel {
     property string workText: ""
 
     title: "Bookmarks"
+    menuIcon: "󰃀"
     placeholder: "Open a bookmark"
+    emptyText: "No bookmark matches"
+    /* A URL is identified by its host, which is at the front. */
+    detailElide: Text.ElideRight
 
     function hostTitle(url) {
         const withoutScheme = url.replace(/^[a-z]+:\/\//i, "");

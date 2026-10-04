@@ -9,7 +9,9 @@ MenuModel {
     id: root
 
     title: "Projects"
+    menuIcon: "󰉋"
     placeholder: "Open a project"
+    emptyText: "No project matches"
 
     function reload() {
         if (!listProcess.running) {

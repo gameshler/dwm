@@ -1,8 +1,9 @@
 pragma ComponentBehavior: Bound
 
+import QtQuick
 import Quickshell
 
-/* What the three bar menus have in common: a list that filters as it is typed
+/* What the bar menus have in common: a list that filters as it is typed
  * into, a selection that survives the filtering, and one activation signal. A
  * concrete menu extends this, fills entries, and handles activated().
  *
@@ -11,11 +12,22 @@ import Quickshell
 Scope {
     id: root
 
-    /* [{ key, label, detail, icon }]. key is what activated() reports, and is
-     * the only field a concrete menu has to give meaning to. */
+    /* [{ key, label, detail, icon, iconSource }]. key is what activated()
+     * reports, and is the only field a concrete menu has to give meaning to.
+     * icon is a glyph from the icon font; iconSource is an image path, for a
+     * row that has a real icon of its own. A row sets one or the other, and the
+     * glyph is what shows when an image path does not resolve. */
     property var entries: []
     property string title: "Menu"
+    /* The glyph beside the search field. A menu opened from a keybinding gives
+     * no other clue which one arrived. */
+    property string menuIcon: "󰍉"
     property string placeholder: "Type to filter"
+    property string emptyText: "No matches"
+    /* Which end of a too-long detail to drop. A path or a URL is identified by
+     * its tail, so the default keeps that; a menu whose detail is a sentence
+     * overrides it, because left-eliding English reads as damage. */
+    property int detailElide: Text.ElideLeft
     property string query: ""
     /* Shown under the list. Set by a menu whose action failed, which is the
      * only way the user hears about it: these are started detached from the

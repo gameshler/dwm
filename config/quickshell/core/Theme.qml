@@ -180,17 +180,38 @@ Singleton {
 
     /* The menus. Width is fixed rather than a fraction of the screen so the
      * same list does not reflow between the 1080p and 1440p panel, and every
-     * value is even for the same centring reason as the bar above. */
-    readonly property int menuWidth: scaledSize(460)
-    readonly property int menuRowHeight: scaledSize(34)
-    readonly property int menuPadding: scaledSize(12)
-    readonly property int menuSpacing: scaledSize(2)
-    readonly property int menuFieldHeight: scaledSize(34)
-    readonly property int menuIconSize: scaledSize(22)
+     * value is even for the same centring reason as the bar above.
+     *
+     * menuIconSize is 24 because that is a size Papirus authors; see the icon
+     * note above. menuRowHeight is 24 + 2 * 9, so the centring margin on a row
+     * is whole, and menuFieldHeight matches it so the field and the first row
+     * read as the same rhythm. */
+    readonly property int menuWidth: scaledSize(560)
+    readonly property int menuRowHeight: scaledSize(42)
+    readonly property int menuPadding: scaledSize(14)
+    readonly property int menuSpacing: scaledSize(4)
+    readonly property int menuGap: scaledSize(10)
+    readonly property int menuFieldHeight: scaledSize(42)
+    readonly property int menuIconSize: scaledSize(24)
     readonly property int menuMaxRows: 9
+    readonly property int menuRadius: scaledSize(12)
+    readonly property int menuRowRadius: scaledSize(8)
+    readonly property int menuFooterHeight: scaledSize(18)
+    readonly property int menuScrollWidth: scaledSize(3)
+    /* The selected row's left mark. The bar marks a focused tag with an
+     * underline; a list marks its selection down the leading edge instead,
+     * because that is the edge the eye tracks while the keys move. */
+    readonly property int menuMarkWidth: scaledSize(3)
+    readonly property real menuMarkFraction: 0.5
 
-    readonly property string menuFill: tooltipFill
+    /* Darker than tooltipFill, which sits over application windows and has to
+     * separate from them. A menu is the only thing on screen that matters while
+     * it is open, so it goes the other way: the panel recedes and the search
+     * field is the one surface that reads as raised. */
+    readonly property string menuFill: "#07070A"
     readonly property string menuBorder: borderStrong
+    readonly property string menuFieldFill: surface
+    readonly property string menuFieldBorder: border
 
     readonly property int animationNormal: 180
 }

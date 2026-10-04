@@ -25,7 +25,9 @@ MenuModel {
     }
 
     title: "Power"
+    menuIcon: "󰐥"
     placeholder: "logout, suspend, reboot..."
+    emptyText: "No such session action"
 
     entries: {
         const rows = [
