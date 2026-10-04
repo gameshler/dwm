@@ -34,7 +34,7 @@ if [ -z "${QT_QPA_PLATFORMTHEME:-}" ]; then
 fi
 
 # Translate Xft.dpi into QT_FONT_DPI so a single value in ~/.Xresources scales
-# the whole desktop. Xft.dpi already sizes dwm's font, client titles and rofi,
+# the whole desktop. Xft.dpi already sizes dwm's font and its client titles,
 # but Qt on xcb assumes a flat 96 and ignores both Xft.dpi and the dimensions
 # the X server reports; QT_FONT_DPI is the only knob that moves it. Skipped
 # when either Qt variable is already set, so .xprofile still wins.

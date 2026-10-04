@@ -1,9 +1,0 @@
-configuration {
-  font: "FiraCode Nerd Font 13";
-  show-icons: true;
-  icon-theme: "Papirus";
-  display-drun: "  ";
-  display-window: "﩯 ";
-  display-combi: "  ";
-}
-@theme "themes/nord.rasi"

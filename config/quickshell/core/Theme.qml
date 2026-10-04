@@ -6,7 +6,7 @@ import Quickshell
 /* The single source of every colour and dimension in the bar. The design rule
  * behind every value: nothing draws a box at rest. The background is the same
  * #000000 as the wallpaper, so fills and borders exist only for hover and
- * selection. Accents are Nord frost, shared with config.h and the rofi theme. */
+ * selection. Accents are Nord frost, shared with config.h. */
 Singleton {
     id: root
 
