@@ -1,5 +1,5 @@
 #!/bin/sh
-# The three bar menus actually running: dwm under Xvfb with the real Quickshell
+# The four bar menus actually running: dwm under Xvfb with the real Quickshell
 # config, driven exactly as a keybinding drives them. Exits 77 when Quickshell
 # or Xvfb is absent, which the Makefile treats as a skip rather than a failure.
 #
@@ -44,6 +44,7 @@ trap cleanup EXIT HUP INT TERM
 home=$work/home
 ran=$work/ran
 mkdir -p "$home/.config" "$home/.local/bin" "$home/.config/bookmarks" \
+	"$home/.local/share/applications" \
 	"$home/projects/alpha-service" "$home/projects/beta-tool" "$home/projects/gamma"
 cp -a "$repo/config/quickshell" "$home/.config/quickshell"
 cp "$repo/scripts/dwm-quickshell-state" "$repo/scripts/quickshell-launch.sh" \
@@ -59,10 +60,21 @@ cat >"$home/.config/bookmarks/work.txt" <<'BOOKMARKS'
 Arch Wiki :: https://wiki.archlinux.org/title/Arch_Linux
 BOOKMARKS
 
+# The apps menu lists what the XDG data directories hold, so the entry it is
+# asked to start has to be one of them. Named for the end of the alphabet so the
+# assertion is about the filter rather than about whatever else is installed.
+cat >"$home/.local/share/applications/dwm-test-app.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Zebra Test App
+Comment=Started by the menu test
+Exec=dwm-test-app --flag
+DESKTOP
+
 # The menus exec these by bare name through the launcher's PATH. Recording
 # stubs, so an assertion can be about what the menu decided rather than about
 # the machine rebooting.
-for helper in dwm-session-action dwm-repo-open dwm-bookmark-open; do
+for helper in dwm-session-action dwm-repo-open dwm-bookmark-open dwm-test-app; do
 	cat >"$home/.local/bin/$helper" <<SH
 #!/bin/sh
 printf '$helper %s\n' "\$*" >>"$ran"
@@ -127,7 +139,7 @@ fail() {
 # Every target a keybinding in config.h names has to be registered, or the key
 # does nothing at all.
 targets=$(ipc show | awk '$1 == "target" { print $2 }' | sort | tr '\n' ' ')
-for target in bookmarks power repos; do
+for target in apps bookmarks power repos; do
 	case " $targets " in
 	*" $target "*) ;;
 	*) fail "No IPC target named $target. Registered: $targets" ;;
@@ -206,6 +218,16 @@ sleep 1
 xdotool key Return
 sleep 2
 expect_ran 'dwm-bookmark-open work https://wiki.archlinux.org/title/Arch_Linux'
+
+# The apps menu runs the entry's parsed Exec line, arguments included. This is
+# the one menu whose rows come from Quickshell rather than from a helper script,
+# so nothing else proves the desktop entries are being read at all.
+open_menu apps || true
+xdotool type --delay 40 'zebra'
+sleep 1
+xdotool key Return
+sleep 2
+expect_ran 'dwm-test-app --flag'
 
 if [ "$failures" -ne 0 ]; then
 	printf 'test-menus-xvfb: %s assertion(s) failed\n' "$failures" >&2
