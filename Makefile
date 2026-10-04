@@ -38,7 +38,7 @@ lint:
 # absent.
 check: check-design-system check-tray check-layout check-state-protocol \
 	check-launcher check-state check-session-action check-display-setup \
-	check-bar-xvfb check-menus-xvfb
+	check-bar-xvfb check-menus-xvfb check-install-config
 
 check-design-system:
 	tests/test-quickshell-design-system.sh
@@ -74,6 +74,44 @@ check-menus-xvfb: dwm
 		if [ "$$status" -eq 77 ]; then exit 0; fi; \
 		exit "$$status"
 
+check-install-config: dwm
+	@status=0; tests/test-install-config.sh || status=$$?; \
+		if [ "$$status" -eq 77 ]; then exit 0; fi; \
+		exit "$$status"
+
+# Each config directory is staged beside its target and moved into place, not
+# copied over it. Quickshell watches ~/.config/quickshell and reloads on any
+# change, so a copy that writes thirty files one at a time is thirty reloads,
+# and the ones landing mid-copy see a tree that does not compile - a shell.qml
+# importing a file the copy has not reached yet. Measured under Xvfb, upgrading
+# a running bar across a commit that adds one QML file: copying in place killed
+# the bar outright, staging and renaming gave one clean reload onto the new
+# config.
+#
+# Ownership and the executable bits are set on the staged tree, so what appears
+# at the published path is correct from the instant it appears; copying in place
+# left the files root-owned for the length of the copy. The two renames are
+# within one directory, so the moment the path does not exist is a syscall wide
+# rather than the length of a copy.
+#
+# Split out of install so it can be exercised without root, which is what
+# tests/test-install-config.sh does.
+install-config:
+	install -d -o ${OWNER} ${CFG_DIR}
+	for dir in config/*/; do \
+		name=$$(basename "$$dir"); \
+		dst=${CFG_DIR}/$$name; \
+		staged=${CFG_DIR}/.$$name.dwm-staged.$$$$; \
+		previous=${CFG_DIR}/.$$name.dwm-previous.$$$$; \
+		rm -rf ${CFG_DIR}/.$$name.dwm-staged.* ${CFG_DIR}/.$$name.dwm-previous.*; \
+		cp -rfLT "$$dir" "$$staged"; \
+		find "$$staged" -name '*.sh' -o -name '*.py' 2>/dev/null | xargs -r chmod +x; \
+		chown -R ${OWNER}: "$$staged"; \
+		if [ -e "$$dst" ] || [ -L "$$dst" ]; then mv "$$dst" "$$previous"; fi; \
+		mv "$$staged" "$$dst"; \
+		rm -rf "$$previous"; \
+	done
+
 install: all
 	@echo "==> Installing DWM..."
 	mkdir -p ${DESTDIR}${PREFIX}/bin
@@ -87,19 +125,7 @@ install: all
 	test -f ${USER_HOME}/.xinitrc || install -Dm644 -o ${OWNER} scripts/.xinitrc ${USER_HOME}/.xinitrc
 	test -f ${USER_HOME}/.xprofile || install -Dm644 -o ${OWNER} scripts/.xprofile ${USER_HOME}/.xprofile
 
-	@echo "==> Installing config directories..."
-	install -d -o ${OWNER} ${CFG_DIR}
-	for dir in config/*/; do \
-		dst=${CFG_DIR}/$$(basename "$$dir"); \
-		[ -L "$$dst" ] && rm -f "$$dst"; \
-		cp -rfLT --remove-destination "$$dir" "$$dst"; \
-	done
-	
-	for dir in config/*/; do \
-		b=$$(basename $$dir); \
-		find "${CFG_DIR}/$$b" -name '*.sh' -o -name '*.py' 2>/dev/null | xargs -r chmod +x; \
-		chown -R ${OWNER}: "${CFG_DIR}/$$b"; \
-	done
+	${MAKE} install-config USER_HOME=${USER_HOME} OWNER=${OWNER}
 
 	@echo "==> Installing scripts..."
 	install -d -o ${OWNER} ${BIN_DIR}
@@ -119,6 +145,7 @@ release: dwm
 	cp -rf config scripts release/
 	tar -czf release/Kaless-${VERSION}.tar.gz -C release dwm dwm.desktop .xinitrc .xprofile config scripts
 
-.PHONY: all clean lint install uninstall release check check-design-system \
-	check-tray check-layout check-state-protocol check-launcher check-state \
-	check-session-action check-display-setup check-bar-xvfb check-menus-xvfb
+.PHONY: all clean lint install install-config uninstall release check \
+	check-design-system check-tray check-layout check-state-protocol \
+	check-launcher check-state check-session-action check-display-setup \
+	check-bar-xvfb check-menus-xvfb check-install-config
